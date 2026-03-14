@@ -172,6 +172,8 @@
     </style>
 </head>
 <body>
+    <script src="config.js"></script>
+
     <div class="auth-container">
         <div class="auth-header">
             <h1>📋 Carton de la Suerte</h1>
@@ -222,7 +224,7 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:3000/api';
+        const API_URL = window.API_URL;
         
         function togglePassword(inputId, button) {
             const input = document.getElementById(inputId);

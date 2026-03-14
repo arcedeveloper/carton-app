@@ -165,6 +165,8 @@
     </style>
 </head>
 <body>
+    <script src="config.js"></script>
+
     <div class="auth-container">
         <div class="auth-header">
             <h1>📋 Carton de la Suerte</h1>
@@ -201,9 +203,8 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:3000/api';
+        const API_URL = window.API_URL;
         
-        // 🧹 LIMPIAR CUALQUIER SESIÓN ANTERIOR AL ENTRAR AL LOGIN
         localStorage.removeItem('token');
         localStorage.removeItem('usuario');
         localStorage.removeItem('carton_alias');
@@ -262,7 +263,6 @@
             }
         }
 
-        // Verificar si hay token (por si acaso, aunque ya limpiamos)
         const token = localStorage.getItem('token');
         if (token) {
             fetch(`${API_URL}/tiempo`, {

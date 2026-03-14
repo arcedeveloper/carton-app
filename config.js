@@ -3,7 +3,7 @@ const CONFIG = {
         API_URL: 'http://localhost:3000/api'
     },
     production: {
-        API_URL: 'https://carton-backend.onrender.com/api' // Tu URL de Render
+        API_URL: 'https://carton-backend.onrender.com/api' 
     }
 };
 
