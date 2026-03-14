@@ -2,14 +2,20 @@ const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const mysql = require('mysql2');
+const { Pool } = require('pg');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { body, validationResult } = require('express-validator');
 require('dotenv').config();
 
 const app = express();
+
+// ============================================
+// SEGURIDAD Y CONFIGURACIÓN
+// ============================================
 app.use(helmet());
+
+// CORS
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
@@ -20,11 +26,14 @@ app.use((req, res, next) => {
     }
     next();
 });
+
+// Logging
 app.use((req, res, next) => {
     console.log(`📡 ${req.method} ${req.url} desde ${req.headers.origin || 'desconocido'}`);
     next();
 });
 
+// Rate limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
@@ -33,15 +42,28 @@ const limiter = rateLimit({
 app.use('/api/', limiter);
 
 app.use(express.json());
-const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
-    user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
-    database: process.env.DB_NAME || 'carton_game',
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-}).promise();
+
+// ============================================
+// BASE DE DATOS POSTGRESQL
+// ============================================
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false
+    }
+});
+
+pool.connect((err) => {
+    if (err) {
+        console.error('❌ Error conectando a PostgreSQL:', err);
+    } else {
+        console.log('✅ Conectado a PostgreSQL');
+    }
+});
+
+// ============================================
+// MIDDLEWARES
+// ============================================
 const verificarToken = (req, res, next) => {
     const token = req.headers['authorization'];
     if (!token) return res.status(401).json({ error: 'Token requerido' });
@@ -60,16 +82,24 @@ const verificarAdmin = (req, res, next) => {
     }
     next();
 };
+
+// ============================================
+// FUNCIÓN DE LOGS
+// ============================================
 async function logAccion(usuarioId, accion, ip, detalles = {}) {
     try {
         await pool.query(
-            'INSERT INTO logs_seguridad (usuario_id, accion, ip, detalles) VALUES (?, ?, ?, ?)',
+            'INSERT INTO logs_seguridad (usuario_id, accion, ip, detalles) VALUES ($1, $2, $3, $4)',
             [usuarioId, accion, ip, JSON.stringify(detalles)]
         );
     } catch (error) {
         console.error('Error guardando log:', error);
     }
 }
+
+// ============================================
+// RUTAS PÚBLICAS
+// ============================================
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'OK',
@@ -81,16 +111,16 @@ app.get('/api/health', (req, res) => {
 app.get('/api/crear-admin', async (req, res) => {
     try {
         const hashedPassword = await bcrypt.hash('admin123', 10);
-        const [existe] = await pool.query('SELECT * FROM usuarios WHERE usuario = ?', ['admin']);
+        const existe = await pool.query('SELECT * FROM usuarios WHERE usuario = $1', ['admin']);
         
-        if (existe.length === 0) {
-            const [result] = await pool.query(
-                'INSERT INTO usuarios (usuario, password, role) VALUES (?, ?, ?)',
+        if (existe.rows.length === 0) {
+            const result = await pool.query(
+                'INSERT INTO usuarios (usuario, password, role) VALUES ($1, $2, $3) RETURNING id',
                 ['admin', hashedPassword, 'admin']
             );
             await pool.query(
-                'INSERT INTO tiempo_uso (usuario_id, horas_restantes) VALUES (?, ?)',
-                [result.insertId, 999999]
+                'INSERT INTO tiempo_uso (usuario_id, horas_restantes) VALUES ($1, $2)',
+                [result.rows[0].id, 999999]
             );
             res.json({ message: '✅ Admin creado correctamente' });
         } else {
@@ -113,24 +143,24 @@ app.post('/api/register',
             }
 
             const { usuario, password } = req.body;
-            const [usuarioExistente] = await pool.query(
-                'SELECT * FROM usuarios WHERE usuario = ?',
+            const usuarioExistente = await pool.query(
+                'SELECT * FROM usuarios WHERE usuario = $1',
                 [usuario]
             );
             
-            if (usuarioExistente.length > 0) {
+            if (usuarioExistente.rows.length > 0) {
                 return res.status(400).json({ error: 'Usuario ya registrado' });
             }
             
             const hashedPassword = await bcrypt.hash(password, 10);
-            const [result] = await pool.query(
-                'INSERT INTO usuarios (usuario, password, role) VALUES (?, ?, ?)',
+            const result = await pool.query(
+                'INSERT INTO usuarios (usuario, password, role) VALUES ($1, $2, $3) RETURNING id',
                 [usuario, hashedPassword, 'user']
             );
             
-            const usuarioId = result.insertId;
+            const usuarioId = result.rows[0].id;
             await pool.query(
-                'INSERT INTO tiempo_uso (usuario_id, horas_restantes, ultima_actividad) VALUES (?, ?, CURRENT_TIMESTAMP)',
+                'INSERT INTO tiempo_uso (usuario_id, horas_restantes, ultima_actividad) VALUES ($1, $2, NOW())',
                 [usuarioId, 0]
             );
             
@@ -167,27 +197,27 @@ app.post('/api/login',
             }
 
             const { usuario, password } = req.body;
-            const [usuarios] = await pool.query(
-                'SELECT * FROM usuarios WHERE usuario = ?',
+            const usuarios = await pool.query(
+                'SELECT * FROM usuarios WHERE usuario = $1',
                 [usuario]
             );
             
-            if (usuarios.length === 0) {
+            if (usuarios.rows.length === 0) {
                 return res.status(401).json({ error: 'Credenciales inválidas' });
             }
             
-            const user = usuarios[0];
+            const user = usuarios.rows[0];
             const passwordValido = await bcrypt.compare(password, user.password);
             if (!passwordValido) {
                 return res.status(401).json({ error: 'Credenciales inválidas' });
             }
             
-            const [tiempoResult] = await pool.query(
-                'SELECT horas_restantes FROM tiempo_uso WHERE usuario_id = ?',
+            const tiempoResult = await pool.query(
+                'SELECT horas_restantes FROM tiempo_uso WHERE usuario_id = $1',
                 [user.id]
             );
             
-            const horas_restantes = tiempoResult[0]?.horas_restantes || 0;
+            const horas_restantes = tiempoResult.rows[0]?.horas_restantes || 0;
             const token = jwt.sign(
                 { id: user.id, usuario: user.usuario, role: user.role },
                 process.env.JWT_SECRET,
@@ -210,18 +240,22 @@ app.post('/api/login',
         }
     }
 );
+
+// ============================================
+// RUTA DE TIEMPO
+// ============================================
 app.get('/api/tiempo', verificarToken, async (req, res) => {
     try {
-        const [result] = await pool.query(
-            'SELECT horas_restantes, ultima_actividad, en_pausa FROM tiempo_uso WHERE usuario_id = ?',
+        const result = await pool.query(
+            'SELECT horas_restantes, ultima_actividad, en_pausa FROM tiempo_uso WHERE usuario_id = $1',
             [req.usuarioId]
         );
         
-        if (!result[0]) {
+        if (!result.rows[0]) {
             return res.json({ horas_restantes: 0, en_pausa: false });
         }
 
-        let { horas_restantes, ultima_actividad, en_pausa } = result[0];
+        let { horas_restantes, ultima_actividad, en_pausa } = result.rows[0];
         
         if (!en_pausa && ultima_actividad) {
             const ahora = new Date();
@@ -237,9 +271,9 @@ app.get('/api/tiempo', verificarToken, async (req, res) => {
                 
                 await pool.query(
                     `UPDATE tiempo_uso 
-                     SET horas_restantes = ?, 
-                         ultima_actividad = CURRENT_TIMESTAMP 
-                     WHERE usuario_id = ?`,
+                     SET horas_restantes = $1, 
+                         ultima_actividad = NOW() 
+                     WHERE usuario_id = $2`,
                     [horas_restantes, req.usuarioId]
                 );
             }
@@ -254,6 +288,10 @@ app.get('/api/tiempo', verificarToken, async (req, res) => {
         res.status(500).json({ error: 'Error al obtener tiempo' });
     }
 });
+
+// ============================================
+// RUTA PARA SINCRONIZAR TIEMPO
+// ============================================
 app.post('/api/tiempo/sincronizar', 
     verificarToken,
     body('horas_restantes').isFloat({ min: 0, max: 999999 }),
@@ -269,9 +307,9 @@ app.post('/api/tiempo/sincronizar',
             
             await pool.query(
                 `UPDATE tiempo_uso 
-                 SET horas_restantes = ?,
-                     ultima_actividad = CURRENT_TIMESTAMP
-                 WHERE usuario_id = ?`,
+                 SET horas_restantes = $1,
+                     ultima_actividad = NOW()
+                 WHERE usuario_id = $2`,
                 [tiempoValido, req.usuarioId]
             );
             
@@ -285,6 +323,10 @@ app.post('/api/tiempo/sincronizar',
         }
     }
 );
+
+// ============================================
+// RUTAS DE SOLICITUDES
+// ============================================
 app.post('/api/solicitar-compra', 
     verificarToken,
     body('horas').isInt({ min: 1, max: 1000 }),
@@ -300,7 +342,7 @@ app.post('/api/solicitar-compra',
             
             await pool.query(
                 `INSERT INTO solicitudes_compra (usuario_id, pack_horas, pack_monto, estado)
-                 VALUES (?, ?, ?, 'pendiente')`,
+                 VALUES ($1, $2, $3, 'pendiente')`,
                 [req.usuarioId, horas, monto]
             );
             
@@ -311,9 +353,13 @@ app.post('/api/solicitar-compra',
         }
     }
 );
+
+// ============================================
+// RUTAS DE ADMIN
+// ============================================
 app.get('/api/admin/usuarios', verificarToken, verificarAdmin, async (req, res) => {
     try {
-        const [usuarios] = await pool.query(`
+        const usuarios = await pool.query(`
             SELECT u.id, u.usuario, u.role, u.alias_tarjeta, u.activo,
                    tu.horas_restantes, tu.en_pausa, tu.tiempo_total_usado,
                    COALESCE(SUM(tc.horas_compradas), 0) as horas_compradas_total,
@@ -325,7 +371,7 @@ app.get('/api/admin/usuarios', verificarToken, verificarAdmin, async (req, res) 
             GROUP BY u.id, tu.horas_restantes, tu.en_pausa, tu.tiempo_total_usado
             ORDER BY u.id DESC
         `);
-        res.json(usuarios);
+        res.json(usuarios.rows);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Error al obtener usuarios' });
@@ -334,17 +380,17 @@ app.get('/api/admin/usuarios', verificarToken, verificarAdmin, async (req, res) 
 
 app.get('/api/admin/estadisticas-ventas', verificarToken, verificarAdmin, async (req, res) => {
     try {
-        const [porDia] = await pool.query(`
+        const porDia = await pool.query(`
             SELECT 
-                DAYNAME(fecha_aprobacion) as dia,
+                TO_CHAR(fecha_aprobacion, 'Day') as dia,
                 COUNT(*) as total_compras,
                 SUM(pack_horas) as total_horas,
                 SUM(pack_monto) as total_monto
             FROM solicitudes_compra 
             WHERE estado = 'aprobado' 
                 AND fecha_aprobacion IS NOT NULL
-                AND fecha_aprobacion >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-            GROUP BY DAYNAME(fecha_aprobacion)
+                AND fecha_aprobacion >= NOW() - INTERVAL '30 days'
+            GROUP BY TO_CHAR(fecha_aprobacion, 'Day')
         `);
         
         const ordenDias = {
@@ -352,23 +398,23 @@ app.get('/api/admin/estadisticas-ventas', verificarToken, verificarAdmin, async 
             'Thursday': 4, 'Friday': 5, 'Saturday': 6, 'Sunday': 7
         };
         
-        porDia.sort((a, b) => ordenDias[a.dia] - ordenDias[b.dia]);
+        porDia.rows.sort((a, b) => ordenDias[a.dia.trim()] - ordenDias[b.dia.trim()]);
         
-        const [porHora] = await pool.query(`
+        const porHora = await pool.query(`
             SELECT 
-                HOUR(fecha_aprobacion) as hora,
+                EXTRACT(HOUR FROM fecha_aprobacion) as hora,
                 COUNT(*) as total_compras,
                 SUM(pack_horas) as total_horas,
                 SUM(pack_monto) as total_monto
             FROM solicitudes_compra 
             WHERE estado = 'aprobado' 
                 AND fecha_aprobacion IS NOT NULL
-                AND fecha_aprobacion >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-            GROUP BY HOUR(fecha_aprobacion)
+                AND fecha_aprobacion >= NOW() - INTERVAL '30 days'
+            GROUP BY EXTRACT(HOUR FROM fecha_aprobacion)
             ORDER BY hora ASC
         `);
         
-        const [totales] = await pool.query(`
+        const totales = await pool.query(`
             SELECT 
                 COUNT(*) as total_compras,
                 SUM(pack_horas) as total_horas,
@@ -376,23 +422,23 @@ app.get('/api/admin/estadisticas-ventas', verificarToken, verificarAdmin, async 
             FROM solicitudes_compra 
             WHERE estado = 'aprobado' 
                 AND fecha_aprobacion IS NOT NULL
-                AND fecha_aprobacion >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+                AND fecha_aprobacion >= NOW() - INTERVAL '30 days'
         `);
         
         let diaPico = null;
         let maxCompras = 0;
-        porDia.forEach(d => {
-            if (d.total_compras > maxCompras) {
-                maxCompras = d.total_compras;
-                diaPico = d.dia;
+        porDia.rows.forEach(d => {
+            if (parseInt(d.total_compras) > maxCompras) {
+                maxCompras = parseInt(d.total_compras);
+                diaPico = d.dia.trim();
             }
         });
         
         let horaPico = null;
         maxCompras = 0;
-        porHora.forEach(h => {
-            if (h.total_compras > maxCompras) {
-                maxCompras = h.total_compras;
+        porHora.rows.forEach(h => {
+            if (parseInt(h.total_compras) > maxCompras) {
+                maxCompras = parseInt(h.total_compras);
                 horaPico = h.hora;
             }
         });
@@ -402,20 +448,32 @@ app.get('/api/admin/estadisticas-ventas', verificarToken, verificarAdmin, async 
             'Thursday': 'Jueves', 'Friday': 'Viernes', 'Saturday': 'Sábado', 'Sunday': 'Domingo'
         };
 
-        const porDiaTraducido = porDia.map(d => ({
-            ...d,
-            dia_esp: traduccionDias[d.dia] || d.dia
+        const porDiaTraducido = porDia.rows.map(d => ({
+            dia: d.dia.trim(),
+            dia_esp: traduccionDias[d.dia.trim()] || d.dia.trim(),
+            total_compras: parseInt(d.total_compras),
+            total_horas: parseInt(d.total_horas),
+            total_monto: parseInt(d.total_monto)
         }));
 
         res.json({
             por_dia: porDiaTraducido,
-            por_hora: porHora,
-            totales: totales[0],
+            por_hora: porHora.rows.map(h => ({
+                hora: parseInt(h.hora),
+                total_compras: parseInt(h.total_compras),
+                total_horas: parseInt(h.total_horas),
+                total_monto: parseInt(h.total_monto)
+            })),
+            totales: {
+                total_compras: parseInt(totales.rows[0].total_compras),
+                total_horas: parseInt(totales.rows[0].total_horas),
+                total_monto: parseInt(totales.rows[0].total_monto)
+            },
             insights: {
                 dia_pico: traduccionDias[diaPico] || diaPico,
                 hora_pico: horaPico,
-                total_dias_con_datos: porDia.length,
-                total_horas_con_datos: porHora.length
+                total_dias_con_datos: porDia.rows.length,
+                total_horas_con_datos: porHora.rows.length
             }
         });
     } catch (error) {
@@ -440,15 +498,15 @@ app.post('/api/admin/agregar-horas',
             
             await pool.query(
                 `UPDATE tiempo_uso 
-                 SET horas_restantes = horas_restantes + ?,
-                     ultima_actividad = CURRENT_TIMESTAMP
-                 WHERE usuario_id = ?`,
+                 SET horas_restantes = horas_restantes + $1,
+                     ultima_actividad = NOW()
+                 WHERE usuario_id = $2`,
                 [horas, usuario_id]
             );
             
             await pool.query(
                 `INSERT INTO tiempo_compras (usuario_id, horas_compradas, monto_pagado)
-                 VALUES (?, ?, ?)`,
+                 VALUES ($1, $2, $3)`,
                 [usuario_id, horas, 0]
             );
             
@@ -474,7 +532,7 @@ app.post('/api/admin/resetear-horas',
             const { usuario_id } = req.body;
             
             await pool.query(
-                'UPDATE tiempo_uso SET horas_restantes = 0, ultima_actividad = CURRENT_TIMESTAMP WHERE usuario_id = ?',
+                'UPDATE tiempo_uso SET horas_restantes = 0, ultima_actividad = NOW() WHERE usuario_id = $1',
                 [usuario_id]
             );
             
@@ -501,7 +559,7 @@ app.post('/api/admin/toggle-usuario',
             const { usuario_id, activo } = req.body;
             
             await pool.query(
-                'UPDATE usuarios SET activo = ? WHERE id = ?',
+                'UPDATE usuarios SET activo = $1 WHERE id = $2',
                 [activo, usuario_id]
             );
             
@@ -515,14 +573,14 @@ app.post('/api/admin/toggle-usuario',
 
 app.get('/api/admin/solicitudes', verificarToken, verificarAdmin, async (req, res) => {
     try {
-        const [solicitudes] = await pool.query(`
+        const solicitudes = await pool.query(`
             SELECT s.*, u.usuario 
             FROM solicitudes_compra s
             JOIN usuarios u ON s.usuario_id = u.id
             WHERE s.estado = 'pendiente'
             ORDER BY s.fecha_solicitud DESC
         `);
-        res.json(solicitudes);
+        res.json(solicitudes.rows);
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Error al obtener solicitudes' });
@@ -542,35 +600,35 @@ app.post('/api/admin/aprobar-solicitud',
 
             const { solicitud_id } = req.body;
             
-            const [solicitud] = await pool.query(
-                'SELECT * FROM solicitudes_compra WHERE id = ?',
+            const solicitud = await pool.query(
+                'SELECT * FROM solicitudes_compra WHERE id = $1',
                 [solicitud_id]
             );
             
-            if (solicitud.length === 0) {
+            if (solicitud.rows.length === 0) {
                 return res.status(404).json({ error: 'Solicitud no encontrada' });
             }
             
-            const { usuario_id, pack_horas, pack_monto } = solicitud[0];
+            const { usuario_id, pack_horas, pack_monto } = solicitud.rows[0];
             
             await pool.query(
                 `UPDATE tiempo_uso 
-                 SET horas_restantes = horas_restantes + ?,
-                     ultima_actividad = CURRENT_TIMESTAMP
-                 WHERE usuario_id = ?`,
+                 SET horas_restantes = horas_restantes + $1,
+                     ultima_actividad = NOW()
+                 WHERE usuario_id = $2`,
                 [pack_horas, usuario_id]
             );
             
             await pool.query(
                 `INSERT INTO tiempo_compras (usuario_id, horas_compradas, monto_pagado)
-                 VALUES (?, ?, ?)`,
+                 VALUES ($1, $2, $3)`,
                 [usuario_id, pack_horas, pack_monto]
             );
             
             await pool.query(
                 `UPDATE solicitudes_compra 
-                 SET estado = 'aprobado', fecha_aprobacion = CURRENT_TIMESTAMP 
-                 WHERE id = ?`,
+                 SET estado = 'aprobado', fecha_aprobacion = NOW() 
+                 WHERE id = $1`,
                 [solicitud_id]
             );
             
@@ -596,7 +654,7 @@ app.post('/api/admin/rechazar-solicitud',
             const { solicitud_id } = req.body;
             
             await pool.query(
-                `UPDATE solicitudes_compra SET estado = 'rechazado' WHERE id = ?`,
+                `UPDATE solicitudes_compra SET estado = 'rechazado' WHERE id = $1`,
                 [solicitud_id]
             );
             
@@ -610,22 +668,26 @@ app.post('/api/admin/rechazar-solicitud',
 
 app.get('/api/admin/stats', verificarToken, verificarAdmin, async (req, res) => {
     try {
-        const [usuarios] = await pool.query('SELECT COUNT(*) as count FROM usuarios WHERE role != ?', ['admin']);
-        const [activos] = await pool.query('SELECT COUNT(*) as count FROM tiempo_uso WHERE horas_restantes > 0');
-        const [horas] = await pool.query('SELECT SUM(horas_compradas) as total FROM tiempo_compras');
-        const [gastos] = await pool.query('SELECT SUM(monto_pagado) as total FROM tiempo_compras');
+        const usuarios = await pool.query('SELECT COUNT(*) as count FROM usuarios WHERE role != $1', ['admin']);
+        const activos = await pool.query('SELECT COUNT(*) as count FROM tiempo_uso WHERE horas_restantes > 0');
+        const horas = await pool.query('SELECT SUM(horas_compradas) as total FROM tiempo_compras');
+        const gastos = await pool.query('SELECT SUM(monto_pagado) as total FROM tiempo_compras');
         
         res.json({
-            total_usuarios: usuarios[0].count,
-            usuarios_activos: activos[0].count,
-            total_horas_vendidas: horas[0].total || 0,
-            total_recaudado: gastos[0].total || 0
+            total_usuarios: parseInt(usuarios.rows[0].count),
+            usuarios_activos: parseInt(activos.rows[0].count),
+            total_horas_vendidas: parseInt(horas.rows[0].total) || 0,
+            total_recaudado: parseInt(gastos.rows[0].total) || 0
         });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Error al obtener estadísticas' });
     }
 });
+
+// ============================================
+// RUTAS DE USUARIO
+// ============================================
 app.post('/api/guardar-alias', 
     verificarToken,
     body('alias').isLength({ min: 3, max: 100 }).trim().escape(),
@@ -638,7 +700,7 @@ app.post('/api/guardar-alias',
 
             const { alias } = req.body;
             await pool.query(
-                'UPDATE usuarios SET alias_tarjeta = ? WHERE id = ?',
+                'UPDATE usuarios SET alias_tarjeta = $1 WHERE id = $2',
                 [alias, req.usuarioId]
             );
             
@@ -652,19 +714,23 @@ app.post('/api/guardar-alias',
 
 app.get('/api/obtener-alias', verificarToken, async (req, res) => {
     try {
-        const [usuario] = await pool.query(
-            'SELECT alias_tarjeta FROM usuarios WHERE id = ?',
+        const usuario = await pool.query(
+            'SELECT alias_tarjeta FROM usuarios WHERE id = $1',
             [req.usuarioId]
         );
-        res.json({ alias: usuario[0]?.alias_tarjeta || '' });
+        res.json({ alias: usuario.rows[0]?.alias_tarjeta || '' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Error al obtener alias' });
     }
 });
+
+// ============================================
+// INICIAR SERVIDOR
+// ============================================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`✅ Servidor corriendo en puerto ${PORT}`);
-    console.log(`📁 Base de datos: MySQL - ${process.env.DB_NAME || 'carton_game'}`);
+    console.log(`📁 Base de datos: PostgreSQL - carton_game`);
     console.log(`🔧 Modo: ${process.env.NODE_ENV || 'development'}`);
 });
