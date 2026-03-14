@@ -262,29 +262,6 @@
                 errorDiv.style.display = 'block';
             }
         }
-
-        const token = localStorage.getItem('token');
-        if (token) {
-            fetch(`${API_URL}/tiempo`, {
-                headers: { 'Authorization': token }
-            })
-            .then(res => {
-                if (res.ok) {
-                    window.location.href = 'index.html';
-                } else {
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('usuario');
-                    localStorage.removeItem('carton_alias');
-                    localStorage.removeItem('carton_tabla');
-                }
-            })
-            .catch(() => {
-                localStorage.removeItem('token');
-                localStorage.removeItem('usuario');
-                localStorage.removeItem('carton_alias');
-                localStorage.removeItem('carton_tabla');
-            });
-        }
     </script>
 </body>
 </html>
