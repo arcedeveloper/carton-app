@@ -10,12 +10,8 @@ require('dotenv').config();
 
 const app = express();
 
-// ============================================
-// SEGURIDAD Y CONFIGURACIÓN
-// ============================================
 app.use(helmet());
 
-// CORS
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
@@ -27,13 +23,11 @@ app.use((req, res, next) => {
     next();
 });
 
-// Logging
 app.use((req, res, next) => {
     console.log(`📡 ${req.method} ${req.url} desde ${req.headers.origin || 'desconocido'}`);
     next();
 });
 
-// Rate limiting
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
@@ -43,9 +37,6 @@ app.use('/api/', limiter);
 
 app.use(express.json());
 
-// ============================================
-// BASE DE DATOS POSTGRESQL
-// ============================================
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: {
@@ -61,9 +52,6 @@ pool.connect((err) => {
     }
 });
 
-// ============================================
-// MIDDLEWARES
-// ============================================
 const verificarToken = (req, res, next) => {
     const token = req.headers['authorization'];
     if (!token) return res.status(401).json({ error: 'Token requerido' });
@@ -83,9 +71,6 @@ const verificarAdmin = (req, res, next) => {
     next();
 };
 
-// ============================================
-// FUNCIÓN DE LOGS
-// ============================================
 async function logAccion(usuarioId, accion, ip, detalles = {}) {
     try {
         await pool.query(
@@ -97,9 +82,6 @@ async function logAccion(usuarioId, accion, ip, detalles = {}) {
     }
 }
 
-// ============================================
-// RUTAS PÚBLICAS
-// ============================================
 app.get('/api/health', (req, res) => {
     res.json({
         status: 'OK',
@@ -241,11 +223,15 @@ app.post('/api/login',
     }
 );
 
-// ============================================
-// RUTA DE TIEMPO
-// ============================================
 app.get('/api/tiempo', verificarToken, async (req, res) => {
     try {
+        if (req.usuarioRole === 'admin') {
+            return res.json({
+                horas_restantes: 999999,
+                en_pausa: false
+            });
+        }
+
         const result = await pool.query(
             'SELECT horas_restantes, ultima_actividad, en_pausa FROM tiempo_uso WHERE usuario_id = $1',
             [req.usuarioId]
@@ -261,26 +247,32 @@ app.get('/api/tiempo', verificarToken, async (req, res) => {
             const ahora = new Date();
             const ultima = new Date(ultima_actividad);
             
-            const segundosPasados = Math.floor((ahora - ultima) / 1000);
-            
-            if (segundosPasados > 0) {
-                const horasPasadas = segundosPasados / 3600;
-                horas_restantes = Math.max(0, parseFloat(horas_restantes) - horasPasadas);
+            if (!isNaN(ultima.getTime())) {
+                const diferencia = ahora - ultima;
                 
-                console.log(`Usuario ${req.usuarioId}: pasaron ${segundosPasados}s, restando ${horasPasadas.toFixed(4)} horas`);
-                
-                await pool.query(
-                    `UPDATE tiempo_uso 
-                     SET horas_restantes = $1, 
-                         ultima_actividad = NOW() 
-                     WHERE usuario_id = $2`,
-                    [horas_restantes, req.usuarioId]
-                );
+                if (!isNaN(diferencia) && diferencia > 0) {
+                    const segundosPasados = Math.floor(diferencia / 1000);
+                    const horasPasadas = segundosPasados / 3600;
+                    
+                    horas_restantes = Math.max(0, parseFloat(horas_restantes) - horasPasadas);
+                    
+                    console.log(`Usuario ${req.usuarioId}: pasaron ${segundosPasados}s, restando ${horasPasadas.toFixed(4)} horas`);
+                    
+                    await pool.query(
+                        `UPDATE tiempo_uso 
+                         SET horas_restantes = $1, 
+                             ultima_actividad = NOW() 
+                         WHERE usuario_id = $2`,
+                        [horas_restantes, req.usuarioId]
+                    );
+                }
             }
         }
 
+        const horasValidas = !isNaN(parseFloat(horas_restantes)) ? parseFloat(horas_restantes) : 0;
+
         res.json({ 
-            horas_restantes: parseFloat(horas_restantes), 
+            horas_restantes: horasValidas, 
             en_pausa 
         });
     } catch (error) {
@@ -289,9 +281,6 @@ app.get('/api/tiempo', verificarToken, async (req, res) => {
     }
 });
 
-// ============================================
-// RUTA PARA SINCRONIZAR TIEMPO
-// ============================================
 app.post('/api/tiempo/sincronizar', 
     verificarToken,
     body('horas_restantes').isFloat({ min: 0, max: 999999 }),
@@ -324,9 +313,6 @@ app.post('/api/tiempo/sincronizar',
     }
 );
 
-// ============================================
-// RUTAS DE SOLICITUDES
-// ============================================
 app.post('/api/solicitar-compra', 
     verificarToken,
     body('horas').isInt({ min: 1, max: 1000 }),
@@ -354,9 +340,6 @@ app.post('/api/solicitar-compra',
     }
 );
 
-// ============================================
-// RUTAS DE ADMIN
-// ============================================
 app.get('/api/admin/usuarios', verificarToken, verificarAdmin, async (req, res) => {
     try {
         const usuarios = await pool.query(`
@@ -685,9 +668,6 @@ app.get('/api/admin/stats', verificarToken, verificarAdmin, async (req, res) => 
     }
 });
 
-// ============================================
-// RUTAS DE USUARIO
-// ============================================
 app.post('/api/guardar-alias', 
     verificarToken,
     body('alias').isLength({ min: 3, max: 100 }).trim().escape(),
@@ -725,9 +705,6 @@ app.get('/api/obtener-alias', verificarToken, async (req, res) => {
     }
 });
 
-// ============================================
-// INICIAR SERVIDOR
-// ============================================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`✅ Servidor corriendo en puerto ${PORT}`);
