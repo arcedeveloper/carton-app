@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            animation: slideUp 0.5s ease;
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .login-header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 40px 20px;
+            text-align: center;
+            color: white;
+        }
+        
+        .login-header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .login-header p {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+        
+        .login-form {
+            padding: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 14px 15px;
+            border: 2px solid #eaeaea;
+            border-radius: 10px;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus {
+            border-color: #4CAF50;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+        
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+        }
+        
+        .password-wrapper input {
+            width: 100%;
+            padding: 14px 45px 14px 15px;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #999;
+            transition: color 0.3s;
+            background: transparent;
+            border: none;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .toggle-password:hover {
+            color: #4CAF50;
+        }
+        
+        .eye-icon {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin-top: 10px;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(26, 26, 46, 0.4);
+        }
+        
+        .error-message {
+            color: #f44336;
+            font-size: 13px;
+            margin-top: 5px;
+            display: none;
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #4CAF50;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-x: auto;
+            margin-bottom: 30px;
+        }
+        
+        .solicitudes-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-x: auto;
+            margin-bottom: 30px;
+            display: block;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: #4CAF50;
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        tr:hover {
+            background: #f5f5f5;
+        }
+        
+        .badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .badge-active {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .badge-inactive {
+            background: #f44336;
+            color: white;
+        }
+        
+        .badge-pausa {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .badge-pendiente {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .btn {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 2px;
+            font-size: 12px;
+        }
+        
+        .btn-add {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .btn-reset {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .btn-block {
+            background: #f44336;
+            color: white;
+        }
+        
+        .btn-unblock {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal-content {
+            background: white;
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 30px;
+            border-radius: 10px;
+        }
+        
+        .input-group {
+            margin: 15px 0;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .btn-modal {
+            width: 100%;
+            padding: 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .btn-modal.secondary {
+            background: #666;
+        }
+        
+        .logout-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .tiempo-cell {
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .tiempo-bajo {
+            background-color: #fff3cd !important;
+            color: #856404 !important;
+        }
+
+        .tiempo-cero {
+            background-color: #f8d7da !important;
+            color: #721c24 !important;
+        }
+
+        .estadisticas-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .estadisticas-titulo {
+            color: #2E7D32;
+            font-size: 22px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #4CAF50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .estadisticas-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        @media (max-width: 768px) {
+            .estadisticas-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .estadisticas-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #e9ecef;
+        }
+
+        .estadisticas-card h3 {
+            color: #495057;
+            font-size: 18px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .estadisticas-card h3 i {
+            color: #4CAF50;
+        }
+
+        .estadisticas-tabla {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .estadisticas-tabla th {
+            background: #4CAF50;
+            color: white;
+            padding: 10px;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        .estadisticas-tabla td {
+            padding: 10px;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 14px;
+        }
+
+        .estadisticas-tabla tr:last-child td {
+            border-bottom: none;
+        }
+
+        .estadisticas-tabla tr:hover td {
+            background: #f1f3f5;
+        }
+
+        .barra-progreso-container {
+            background: #e9ecef;
+            border-radius: 20px;
+            height: 20px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .barra-progreso {
+            background: #4CAF50;
+            height: 100%;
+            border-radius: 20px;
+            color: white;
+            font-size: 11px;
+            line-height: 20px;
+            padding-left: 8px;
+            transition: width 0.3s ease;
+        }
+
+        .dia-activo {
+            font-weight: bold;
+            color: #2E7D32;
+        }
+
+        .hora-pico {
+            background: #fff3cd;
+            font-weight: bold;
+        }
+
+        .resumen-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px dashed #dee2e6;
+        }
+
+        .resumen-item {
+            text-align: center;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .resumen-valor {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin: 5px 0;
+        }
+
+        .resumen-label {
+            color: #6c757d;
+            font-size: 13px;
+        }
+
+        .actualizar-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .actualizar-btn:hover {
+            background: #388E3C;
+            transform: translateY(-2px);
+        }
+
+        .insights-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4CAF50;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .insights-box strong {
+            color: #2E7D32;
+        }
+
+        .loading-stats {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <script src="config.js"></script>
+
+    <div id="login-screen" class="login-container">
+        <div class="login-header">
+            <h1>🔐 Administración</h1>
+            <p>Panel de administración</p>
+        </div>
+        
+        <div class="login-form">
+            <div class="form-group">
+                <label>Usuario</label>
+                <input type="text" id="login-usuario" value="admin">
+            </div>
+            
+            <div class="form-group">
+                <label>Contraseña</label>
+                <div class="password-wrapper">
+                    <input type="password" id="login-password" placeholder="Ingresá tu contraseña">
+                    <button class="toggle-password" onclick="togglePassword('login-password', this)">
+                        <svg class="eye-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="login-error" class="error-message"></div>
+            
+            <button class="login-btn" onclick="iniciarSesion()">Ingresar</button>
+        </div>
+    </div>
+    
+    <div id="admin-panel" style="display: none;">
+        <div class="container">
+            <div class="header">
+                <h1>📊 Panel de Administración</h1>
+                <button class="logout-btn" onclick="cerrarSesion()">Cerrar Sesión</button>
+            </div>
+            
+            <!-- 1. ESTADÍSTICAS GENERALES -->
+            <div class="stats-grid" id="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-usuarios">0</div>
+                    <div class="stat-label">Usuarios Totales</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="usuarios-activos">0</div>
+                    <div class="stat-label">Usuarios con tiempo</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="horas-vendidas">0</div>
+                    <div class="stat-label">Horas Vendidas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="total-recaudado">0 ₲</div>
+                    <div class="stat-label">Total Recaudado</div>
+                </div>
+            </div>
+
+            <!-- 2. SOLICITUDES PENDIENTES (SIEMPRE VISIBLE) -->
+            <div id="solicitudes-container" class="solicitudes-container">
+                <h3 style="margin-bottom: 20px;">⏳ Solicitudes de Compra Pendientes</h3>
+                <table id="tabla-solicitudes">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th>Pack</th>
+                            <th>Monto</th>
+                            <th>Fecha</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo-solicitudes">
+                        <tr>
+                            <td colspan="6" style="text-align: center;">Cargando...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 3. USUARIOS REGISTRADOS -->
+            <div class="table-container">
+                <h2 style="margin-bottom: 20px;">👥 Usuarios Registrados</h2>
+                <table id="tabla-usuarios">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th>Alias</th>
+                            <th>Tiempo Restante</th>
+                            <th>Total Horas</th>
+                            <th>Total Pagado</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cuerpo-tabla">
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- 4. ESTADÍSTICAS DE VENTAS -->
+            <div class="estadisticas-container" id="estadisticas-ventas">
+                <div class="estadisticas-titulo">
+                    📈 Estadísticas de Ventas (Últimos 30 días)
+                    <button class="actualizar-btn" onclick="cargarEstadisticasVentas()">
+                        🔄 Actualizar
+                    </button>
+                </div>
+                
+                <div id="estadisticas-content">
+                    <div class="loading-stats">Cargando estadísticas...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modal-horas" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 20px;">⏰ Agregar Horas</h3>
+            <div class="input-group">
+                <label>Usuario ID: <span id="modal-user-id"></span></label>
+            </div>
+            <div class="input-group">
+                <label>Horas a agregar:</label>
+                <input type="number" id="horas-agregar" min="1" value="1">
+            </div>
+            <button class="btn-modal" onclick="confirmarAgregarHoras()">Agregar</button>
+            <button class="btn-modal secondary" onclick="cerrarModal()">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('admin_token');
+        let usuarioSeleccionado = null;
+        
+        const intervalosUsuarios = {};
+        
+        if (token) {
+            verificarToken();
+        }
+        
+        function togglePassword(inputId, button) {
+            const input = document.getElementById(inputId);
+            const svg = button.querySelector('svg');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                svg.innerHTML = `
+                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                `;
+            } else {
+                input.type = 'password';
+                svg.innerHTML = `
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                    <circle cx="12" cy="12" r="3"></circle>
+                `;
+            }
+        }
+        
+        async function verificarToken() {
+            try {
+                const res = await fetch(`${API_URL}/admin/stats`, {
+                    headers: { 'Authorization': token }
+                });
+                
+                if (res.ok) {
+                    cargarPanelAdmin();
+                } else {
+                    localStorage.removeItem('admin_token');
+                    token = null;
+                }
+            } catch (error) {
+                localStorage.removeItem('admin_token');
+                token = null;
+            }
+        }
+        
+        async function iniciarSesion() {
+            const usuario = document.getElementById('login-usuario').value;
+            const password = document.getElementById('login-password').value;
+            const errorDiv = document.getElementById('login-error');
+            
+            if (!usuario || !password) {
+                errorDiv.textContent = 'Completá todos los campos';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            try {
+                const res = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usuario, password })
+                });
+                
+                const data = await res.json();
+                
+                if (res.ok) {
+                    if (data.usuario.role === 'admin') {
+                        token = data.token;
+                        localStorage.setItem('admin_token', token);
+                        errorDiv.style.display = 'none';
+                        cargarPanelAdmin();
+                    } else {
+                        errorDiv.textContent = 'No tenés permisos de administrador';
+                        errorDiv.style.display = 'block';
+                    }
+                } else {
+                    errorDiv.textContent = data.error || 'Credenciales incorrectas';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Error de conexión con el servidor';
+                errorDiv.style.display = 'block';
+            }
+        }
+        
+        function cargarPanelAdmin() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('admin-panel').style.display = 'block';
+            cargarEstadisticas();
+            cargarSolicitudes();
+            cargarUsuarios();
+            cargarEstadisticasVentas();
+            
+            setInterval(sincronizarTodosLosTiempos, 30000);
+            setInterval(cargarSolicitudes, 10000); 
+        }
+        
+        function cerrarSesion() {
+            Object.values(intervalosUsuarios).forEach(intervalo => clearInterval(intervalo));
+            
+            localStorage.removeItem('admin_token');
+            token = null;
+            document.getElementById('login-screen').style.display = 'block';
+            document.getElementById('admin-panel').style.display = 'none';
+        }
+        
+        async function cargarSolicitudes() {
+            try {
+                const res = await fetch(`${API_URL}/admin/solicitudes`, {
+                    headers: { 'Authorization': token }
+                });
+                const solicitudes = await res.json();
+                
+                const tbody = document.getElementById('cuerpo-solicitudes');
+                
+                if (solicitudes.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No hay solicitudes pendientes</td></tr>';
+                } else {
+                    tbody.innerHTML = '';
+                    solicitudes.forEach(s => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>${s.id}</td>
+                            <td><strong>${s.usuario}</strong></td>
+                            <td>${s.pack_horas} horas</td>
+                            <td>₲ ${new Intl.NumberFormat('es-PY').format(s.pack_monto)}</td>
+                            <td>${new Date(s.fecha_solicitud).toLocaleString()}</td>
+                            <td>
+                                <button class="btn btn-add" onclick="aprobarSolicitud(${s.id})">✅ Aprobar</button>
+                                <button class="btn btn-block" onclick="rechazarSolicitud(${s.id})">❌ Rechazar</button>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch (error) {
+                console.error('Error cargando solicitudes:', error);
+            }
+        }
+        
+        async function aprobarSolicitud(solicitudId) {
+            if (confirm('¿Aprobar esta solicitud? Se agregarán las horas al usuario.')) {
+                try {
+                    const res = await fetch(`${API_URL}/admin/aprobar-solicitud`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': token
+                        },
+                        body: JSON.stringify({ solicitud_id: solicitudId })
+                    });
+                    
+                    const data = await res.json();
+                    
+                    if (data.success) {
+                        alert('✅ Solicitud aprobada');
+                        cargarSolicitudes();
+                        cargarUsuarios();
+                        cargarEstadisticas();
+                        cargarEstadisticasVentas();
+                    } else {
+                        alert('Error al aprobar: ' + (data.error || 'desconocido'));
+                    }
+                } catch (error) {
+                    alert('Error de conexión al aprobar');
+                }
+            }
+        }
+        
+        async function rechazarSolicitud(solicitudId) {
+            if (confirm('¿Rechazar esta solicitud?')) {
+                try {
+                    const res = await fetch(`${API_URL}/admin/rechazar-solicitud`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': token
+                        },
+                        body: JSON.stringify({ solicitud_id: solicitudId })
+                    });
+                    
+                    const data = await res.json();
+                    
+                    if (data.success) {
+                        alert('❌ Solicitud rechazada');
+                        cargarSolicitudes();
+                    } else {
+                        alert('Error al rechazar: ' + (data.error || 'desconocido'));
+                    }
+                } catch (error) {
+                    alert('Error de conexión al rechazar');
+                }
+            }
+        }
+        
+        async function cargarEstadisticas() {
+            try {
+                const res = await fetch(`${API_URL}/admin/stats`, {
+                    headers: { 'Authorization': token }
+                });
+                const data = await res.json();
+                
+                document.getElementById('total-usuarios').textContent = data.total_usuarios || 0;
+                document.getElementById('usuarios-activos').textContent = data.usuarios_activos || 0;
+                document.getElementById('horas-vendidas').textContent = data.total_horas_vendidas || 0;
+                document.getElementById('total-recaudado').textContent = 
+                    new Intl.NumberFormat('es-PY').format(data.total_recaudado || 0) + ' ₲';
+            } catch (error) {
+                console.error('Error cargando estadísticas:', error);
+            }
+        }
+
+        async function cargarEstadisticasVentas() {
+            try {
+                const res = await fetch(`${API_URL}/admin/estadisticas-ventas`, {
+                    headers: { 'Authorization': token }
+                });
+                
+                if (!res.ok) {
+                    throw new Error('Error al cargar estadísticas');
+                }
+                
+                const data = await res.json();
+                mostrarEstadisticasVentas(data);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('estadisticas-content').innerHTML = `
+                    <div class="no-data">
+                        ❌ Error al cargar estadísticas<br>
+                        <small>${error.message}</small>
+                    </div>
+                `;
+            }
+        }
+
+        function mostrarEstadisticasVentas(data) {
+            const container = document.getElementById('estadisticas-content');
+            
+            if (!data.por_dia || data.por_dia.length === 0) {
+                container.innerHTML = `
+                    <div class="no-data">
+                        📊 No hay suficientes datos para mostrar estadísticas<br>
+                        <small>Las estadísticas aparecerán cuando haya ventas aprobadas</small>
+                    </div>
+                `;
+                return;
+            }
+
+            const traduccionDias = {
+                'Monday': 'Lunes', 'Tuesday': 'Martes', 'Wednesday': 'Miércoles',
+                'Thursday': 'Jueves', 'Friday': 'Viernes', 'Saturday': 'Sábado', 'Sunday': 'Domingo'
+            };
+
+            const maxComprasDia = Math.max(...data.por_dia.map(d => d.total_compras));
+            const maxComprasHora = Math.max(...data.por_hora.map(h => h.total_compras));
+
+            let html = '';
+
+            if (data.insights) {
+                html += `
+                    <div class="insights-box">
+                        <strong>🎯 Insight del momento:</strong> El mejor día es <strong>${data.insights.dia_pico}</strong> 
+                        y la mejor hora es <strong>${data.insights.hora_pico}:00hs</strong>
+                    </div>
+                `;
+            }
+
+            html += '<div class="estadisticas-grid">';
+            html += `
+                <div class="estadisticas-card">
+                    <h3>📅 Ventas por día</h3>
+                    <table class="estadisticas-tabla">
+                        <thead>
+                            <tr>
+                                <th>Día</th>
+                                <th>Compras</th>
+                                <th>Horas</th>
+                                <th>Monto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            data.por_dia.forEach(d => {
+                const porcentaje = (d.total_compras / maxComprasDia) * 100;
+                const diaEsp = d.dia_esp || d.dia;
+                const esPico = d.dia === data.insights.dia_pico ? 'dia-activo' : '';
+                
+                html += `
+                    <tr class="${esPico}">
+                        <td><strong>${diaEsp}</strong></td>
+                        <td>
+                            ${d.total_compras}
+                            <div class="barra-progreso-container">
+                                <div class="barra-progreso" style="width: ${porcentaje}%">${d.total_compras}</div>
+                            </div>
+                        </td>
+                        <td>${d.total_horas} h</td>
+                        <td>₲ ${new Intl.NumberFormat('es-PY').format(d.total_monto)}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            html += `
+                <div class="estadisticas-card">
+                    <h3>⏰ Ventas por hora</h3>
+                    <table class="estadisticas-tabla">
+                        <thead>
+                            <tr>
+                                <th>Hora</th>
+                                <th>Compras</th>
+                                <th>Horas</th>
+                                <th>Monto</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
+
+            data.por_hora.forEach(h => {
+                const porcentaje = (h.total_compras / maxComprasHora) * 100;
+                const esPico = h.hora === data.insights.hora_pico ? 'hora-pico' : '';
+                const horaFormateada = h.hora < 10 ? `0${h.hora}:00` : `${h.hora}:00`;
+                
+                html += `
+                    <tr class="${esPico}">
+                        <td><strong>${horaFormateada}</strong></td>
+                        <td>
+                            ${h.total_compras}
+                            <div class="barra-progreso-container">
+                                <div class="barra-progreso" style="width: ${porcentaje}%">${h.total_compras}</div>
+                            </div>
+                        </td>
+                        <td>${h.total_horas} h</td>
+                        <td>₲ ${new Intl.NumberFormat('es-PY').format(h.total_monto)}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            html += '</div>';
+
+            container.innerHTML = html;
+        }
+        function formatearTiempoDesdeSegundos(segundos) {
+            if (segundos <= 0) return "0h 0m";
+            
+            const horas = Math.floor(segundos / 3600);
+            const minutos = Math.floor((segundos % 3600) / 60);
+            
+            if (horas === 0) {
+                return `${minutos}m`;
+            } else if (minutos === 0) {
+                return `${horas}h`;
+            } else {
+                return `${horas}h ${minutos}m`;
+            }
+        }
+        
+        function iniciarContadorUsuario(usuarioId, segundosIniciales) {
+            if (intervalosUsuarios[usuarioId]) {
+                clearInterval(intervalosUsuarios[usuarioId]);
+            }
+            
+            let segundosRestantes = segundosIniciales;
+            
+            actualizarTiempoUsuario(usuarioId, segundosRestantes);
+            
+            intervalosUsuarios[usuarioId] = setInterval(() => {
+                if (segundosRestantes > 0) {
+                    segundosRestantes--;
+                    actualizarTiempoUsuario(usuarioId, segundosRestantes);
+                    
+                    if (segundosRestantes <= 0) {
+                        clearInterval(intervalosUsuarios[usuarioId]);
+                        delete intervalosUsuarios[usuarioId];
+                        
+                        const tiempoCell = document.getElementById(`tiempo-${usuarioId}`);
+                        if (tiempoCell) {
+                            tiempoCell.classList.add('tiempo-cero');
+                        }
+                    }
+                    
+                    if (segundosRestantes < 300) {
+                        const tiempoCell = document.getElementById(`tiempo-${usuarioId}`);
+                        if (tiempoCell) {
+                            tiempoCell.classList.add('tiempo-bajo');
+                        }
+                    }
+                }
+            }, 1000);
+        }
+        
+        function actualizarTiempoUsuario(usuarioId, segundos) {
+            const tiempoCell = document.getElementById(`tiempo-${usuarioId}`);
+            if (tiempoCell) {
+                const tiempoFormateado = formatearTiempoDesdeSegundos(segundos);
+                tiempoCell.innerHTML = `<strong>${tiempoFormateado}</strong>`;
+            }
+        }
+        
+        async function sincronizarTodosLosTiempos() {
+            try {
+                const res = await fetch(`${API_URL}/admin/usuarios`, {
+                    headers: { 'Authorization': token }
+                });
+                const usuarios = await res.json();
+                
+                usuarios.forEach(u => {
+                    const segundosActuales = Math.max(0, Math.round((u.horas_restantes || 0) * 3600));
+                    
+                    if (intervalosUsuarios[u.id]) {
+                        clearInterval(intervalosUsuarios[u.id]);
+                        delete intervalosUsuarios[u.id];
+                    }
+                    
+                    if (u.activo && !u.en_pausa && segundosActuales > 0) {
+                        iniciarContadorUsuario(u.id, segundosActuales);
+                    } else {
+                        actualizarTiempoUsuario(u.id, segundosActuales);
+                    }
+                });
+            } catch (error) {
+                console.error('Error sincronizando tiempos:', error);
+            }
+        }
+        
+        async function cargarUsuarios() {
+            try {
+                const res = await fetch(`${API_URL}/admin/usuarios`, {
+                    headers: { 'Authorization': token }
+                });
+                const usuarios = await res.json();
+                
+                Object.values(intervalosUsuarios).forEach(intervalo => clearInterval(intervalo));
+                
+                const tbody = document.getElementById('cuerpo-tabla');
+                tbody.innerHTML = '';
+                
+                usuarios.forEach(u => {
+                    const tr = document.createElement('tr');
+                    tr.id = `usuario-fila-${u.id}`;
+                    
+                    const segundosIniciales = Math.max(0, Math.round((u.horas_restantes || 0) * 3600));
+                    
+                    tr.innerHTML = `
+                        <td>${u.id}</td>
+                        <td><strong>${u.usuario}</strong></td>
+                        <td>${u.alias_tarjeta || '-'}</td>
+                        <td class="tiempo-cell ${segundosIniciales <= 0 ? 'tiempo-cero' : ''}" id="tiempo-${u.id}">
+                            <strong>${formatearTiempoDesdeSegundos(segundosIniciales)}</strong>
+                        </td>
+                        <td>${u.horas_compradas_total || 0} h</td>
+                        <td>${new Intl.NumberFormat('es-PY').format(u.total_gastado || 0)} ₲</td>
+                        <td>
+                            ${u.activo ? 
+                                '<span class="badge badge-active">Activo</span>' : 
+                                '<span class="badge badge-inactive">Bloqueado</span>'}
+                            ${u.en_pausa ? '<span class="badge badge-pausa">Pausa</span>' : ''}
+                        </td>
+                        <td>
+                            <button class="btn btn-add" onclick="abrirModalHoras(${u.id})">➕ Agregar Horas</button>
+                            <button class="btn btn-reset" onclick="resetearHoras(${u.id})">🔄 Resetear</button>
+                            ${u.activo ? 
+                                `<button class="btn btn-block" onclick="toggleUsuario(${u.id}, false)">🔒 Bloquear</button>` :
+                                `<button class="btn btn-unblock" onclick="toggleUsuario(${u.id}, true)">🔓 Activar</button>`}
+                        </td>
+                    `;
+                    
+                    tbody.appendChild(tr);
+                    
+                    if (u.activo && !u.en_pausa && segundosIniciales > 0) {
+                        iniciarContadorUsuario(u.id, segundosIniciales);
+                    }
+                });
+            } catch (error) {
+                console.error('Error cargando usuarios:', error);
+            }
+        }
+        
+        function abrirModalHoras(userId) {
+            usuarioSeleccionado = userId;
+            document.getElementById('modal-user-id').textContent = userId;
+            document.getElementById('modal-horas').style.display = 'block';
+        }
+        
+        function cerrarModal() {
+            document.getElementById('modal-horas').style.display = 'none';
+            usuarioSeleccionado = null;
+        }
+        
+        async function confirmarAgregarHoras() {
+            const horas = document.getElementById('horas-agregar').value;
+            
+            try {
+                const res = await fetch(`${API_URL}/admin/agregar-horas`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token
+                    },
+                    body: JSON.stringify({
+                        usuario_id: usuarioSeleccionado,
+                        horas: parseFloat(horas)
+                    })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    alert('✅ Horas agregadas correctamente');
+                    cerrarModal();
+                    
+                    if (intervalosUsuarios[usuarioSeleccionado]) {
+                        clearInterval(intervalosUsuarios[usuarioSeleccionado]);
+                    }
+                    
+                    cargarUsuarios();
+                    cargarEstadisticas();
+                } else {
+                    alert('Error al agregar horas: ' + (data.error || 'desconocido'));
+                }
+            } catch (error) {
+                alert('Error de conexión al agregar horas');
+            }
+        }
+        
+        async function resetearHoras(userId) {
+            if (confirm('¿Estás seguro de resetear las horas de este usuario a 0?')) {
+                try {
+                    const res = await fetch(`${API_URL}/admin/resetear-horas`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': token
+                        },
+                        body: JSON.stringify({ usuario_id: userId })
+                    });
+                    
+                    const data = await res.json();
+                    
+                    if (data.success) {
+                        alert('✅ Horas reseteadas');
+                        
+                        if (intervalosUsuarios[userId]) {
+                            clearInterval(intervalosUsuarios[userId]);
+                            delete intervalosUsuarios[userId];
+                        }
+                        
+                        const tiempoCell = document.getElementById(`tiempo-${userId}`);
+                        if (tiempoCell) {
+                            tiempoCell.innerHTML = `<strong>0h 0m</strong>`;
+                            tiempoCell.classList.add('tiempo-cero');
+                        }
+                        
+                        cargarEstadisticas();
+                    } else {
+                        alert('Error al resetear horas: ' + (data.error || 'desconocido'));
+                    }
+                } catch (error) {
+                    alert('Error de conexión al resetear');
+                }
+            }
+        }
+        
+        async function toggleUsuario(userId, activo) {
+            try {
+                const res = await fetch(`${API_URL}/admin/toggle-usuario`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token
+                    },
+                    body: JSON.stringify({ usuario_id: userId, activo })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    if (!activo) {
+                        if (intervalosUsuarios[userId]) {
+                            clearInterval(intervalosUsuarios[userId]);
+                            delete intervalosUsuarios[userId];
+                        }
+                    }
+                    cargarUsuarios();
+                    cargarEstadisticas();
+                } else {
+                    alert('Error al cambiar estado: ' + (data.error || 'desconocido'));
+                }
+            } catch (error) {
+                alert('Error de conexión al cambiar estado');
+            }
+        }
+    </script>
+</body>
+</html>
