@@ -801,17 +801,12 @@
                 const data = await res.json();
                 tiempoRestanteSegundos = Math.round(data.horas_restantes * 3600);
                 
-                // ✅ PRIMERO: Verificar si no hay tiempo
                 if (tiempoRestanteSegundos <= 0) {
-                    // Mostrar modal ANTES de que se vea la tabla
                     abrirModalCompraAuto();
-                    // No mostrar el tiempo
                     document.getElementById('user-tiempo').textContent = '0h 0m';
-                    // No iniciar el contador
                     return;
                 }
 
-                // ✅ SOLO si hay tiempo, mostrar todo
                 actualizarDisplayTiempo();
 
                 if (intervaloTiempo) clearInterval(intervaloTiempo);
@@ -825,9 +820,8 @@
 
             } catch (error) {
                 console.error('Error:', error);
-                localStorage.removeItem('token');
-                localStorage.removeItem('usuario');
-                window.location.href = 'login.html';
+                document.getElementById('user-tiempo').textContent = '0h 0m';
+                abrirModalCompraAuto();
             }
         }
 
