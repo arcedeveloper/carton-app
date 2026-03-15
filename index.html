@@ -214,7 +214,7 @@
             border-radius: 6px;
             margin: 15px 0;
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(3, 1fr);
             gap: 10px;
             border: 1px solid #ddd;
             backdrop-filter: blur(5px);
@@ -644,11 +644,6 @@
                 <label>Premio (%):</label>
                 <input type="number" id="pct-premio1" value="50" min="0" max="100">
             </div>
-            
-            <div class="control-item">
-                <label>Premio 2 (%):</label>
-                <input type="number" id="pct-premio2" value="25" min="0" max="100" disabled style="background:#f0f0f0;">
-            </div>
         </div>
         
         <div class="botones">
@@ -852,7 +847,6 @@
             lugares: 20,
             costo: 20000,
             pctPremio1: 50,
-            pctPremio2: 25,
             nombres: [],
             ganadores: [],
             miAlias: ""
@@ -868,7 +862,6 @@
             document.getElementById('lugares').value = sistema.lugares;
             document.getElementById('costo').value = formatoNumero(sistema.costo);
             document.getElementById('pct-premio1').value = sistema.pctPremio1;
-            document.getElementById('pct-premio2').value = sistema.pctPremio2;
             document.getElementById('costo').addEventListener('input', formatearInputCosto);
 
             crearTablaFormatoCorrecto();
