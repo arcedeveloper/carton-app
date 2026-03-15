@@ -866,23 +866,28 @@
         let intervaloSeleccion = null;
 
         function init() {
-            localStorage.removeItem('carton_tabla');
+    const datosGuardados = localStorage.getItem('carton_tabla');
+    if (datosGuardados) {
+        try {
+            const datos = JSON.parse(datosGuardados);
+            sistema = { ...sistema, ...datos };
+        } catch (e) {
+            console.error('Error cargando datos:', e);
             sistema.nombres = Array(sistema.lugares).fill("");
-
-            document.getElementById('lugares').value = sistema.lugares;
-            document.getElementById('costo').value = formatoNumero(sistema.costo);
-            document.getElementById('pct-premio1').value = sistema.pctPremio1;
-            document.getElementById('costo').addEventListener('input', formatearInputCosto);
-
-            crearTablaFormatoCorrecto();
-            actualizarCalculos();
-            cargarAliasGuardado();
         }
+    } else {
+        sistema.nombres = Array(sistema.lugares).fill("");
+    }
 
-        // ============================================
-        // FUNCIONES DE ALIAS
-        // ============================================
+    document.getElementById('lugares').value = sistema.lugares;
+    document.getElementById('costo').value = formatoNumero(sistema.costo);
+    document.getElementById('pct-premio1').value = sistema.pctPremio1;
+    document.getElementById('costo').addEventListener('input', formatearInputCosto);
 
+    crearTablaFormatoCorrecto();
+    actualizarCalculos();
+    cargarAliasGuardado();
+}
         function mostrarAliasGuardado(alias) {
             document.getElementById('alias-edicion').style.display = 'none';
             document.getElementById('alias-visualizacion').style.display = 'block';
