@@ -670,6 +670,11 @@
                     Te acreditamos las horas en minutos.
                 </p>
             </div>
+
+            <!-- ✅ Botón cerrar agregado (esto faltaba) -->
+            <button id="btn-cerrar-modal" onclick="cerrarModalCompra()" class="btn-compra-modal btn-cerrar-modal" style="display: none;">
+                ❌ Cerrar
+            </button>
         </div>
     </div>
 
@@ -681,7 +686,8 @@
         <button class="logout-btn" onclick="cerrarSesion()">🔒 Cerrar Sesión</button>
     </div>
     
-    <div class="container" id="app-container">
+    <!-- ✅ App arranca BORROSA (blur) hasta saber el tiempo -->
+    <div class="container blur" id="app-container">
         <div class="header">
             <h1 class="titulo">📋 Carton de la Suerte</h1>
         </div>
@@ -896,9 +902,11 @@
                 if (tiempoRestanteSegundos <= 0) {
                     abrirModalCompraAuto();
                     document.getElementById('user-tiempo').textContent = '0h 0m';
-                    return;
+                    return; // ✅ Sale, la tabla queda borrosa
                 }
 
+                // ✅ Solo si tiene tiempo, QUITAR el blur y mostrar todo
+                document.getElementById('app-container').classList.remove('blur');
                 actualizarDisplayTiempo();
 
                 if (intervaloTiempo) clearInterval(intervaloTiempo);
