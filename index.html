@@ -672,7 +672,7 @@
                 </p>
             </div>
             
-            <button class="btn-compra-modal" id="btn-confirmar-compra" onclick="confirmarCompraOriginal()" disabled style="display: block;">Seleccioná un pack</button>
+            <button class="btn-compra-modal" id="btn-confirmar-compra" onclick="confirmarPago()" disabled style="display: block;">✅ CONFIRMAR PAGO</button>     
             <button class="btn-compra-modal btn-cerrar-modal" id="btn-cerrar-modal" onclick="cerrarModalCompra()" style="display: none;">Cerrar</button>
         </div>
     </div>
@@ -795,17 +795,21 @@
         }
 
         function seleccionarPack(horas, monto) {
-            document.querySelectorAll('.compra-pack').forEach(p => p.classList.remove('selected'));
-            event.currentTarget.classList.add('selected');
-            packSeleccionado = { horas, monto };
-            
-            // Mostrar info de pago
-            document.getElementById('info-pago').style.display = 'block';
-            document.getElementById('monto-pago').textContent = `₲ ${formatoNumero(monto)}`;
-            
-            // Ocultar botón original
-            document.getElementById('btn-confirmar-compra').style.display = 'none';
-        }
+    document.querySelectorAll('.compra-pack').forEach(p => p.classList.remove('selected'));
+    event.currentTarget.classList.add('selected');
+    packSeleccionado = { horas, monto };
+    
+    // ✅ Mostrar info de pago INMEDIATAMENTE
+    document.getElementById('info-pago').style.display = 'block';
+    document.getElementById('monto-pago').textContent = `₲ ${formatoNumero(monto)}`;
+    
+    // ✅ Ocultar el botón viejo
+    document.getElementById('btn-confirmar-compra').style.display = 'none';
+    
+    // ✅ Habilitar el botón de confirmar (aunque ahora usamos el nuevo flujo)
+    const btnConfirmar = document.getElementById('btn-confirmar-compra');
+    btnConfirmar.disabled = false;
+}
 
         function copiarAlias() {
             navigator.clipboard.writeText('6018795');
@@ -856,16 +860,6 @@
             } catch (error) {
                 alert('Error de conexión');
             }
-        }
-
-        function confirmarCompraOriginal() {
-            if (!packSeleccionado.horas) {
-                alert('Seleccioná un pack');
-                return;
-            }
-            
-            document.getElementById('info-pago').style.display = 'block';
-            document.getElementById('btn-confirmar-compra').style.display = 'none';
         }
 
         function abrirModalCompraManual() {
