@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>Carton de la Suerte - Formato Tabla</title>
     <style>
         * {
@@ -23,7 +23,7 @@
             margin: 0 auto 10px auto;
             background: rgba(0,0,0,0.3);
             backdrop-filter: blur(10px);
-            padding: 10px 20px;
+            padding: 10px 15px;
             border-radius: 10px;
             display: flex;
             justify-content: space-between;
@@ -34,20 +34,23 @@
         .user-info {
             display: flex;
             align-items: center;
-            gap: 20px;
+            gap: 15px;
+            flex-wrap: wrap;
         }
         
         .user-name {
             font-weight: bold;
+            font-size: 14px;
         }
         
         .user-time {
             background: rgba(255,255,255,0.2);
-            padding: 5px 15px;
+            padding: 5px 12px;
             border-radius: 20px;
             font-size: 14px;
             cursor: pointer;
             transition: all 0.3s;
+            white-space: nowrap;
         }
         
         .user-time:hover {
@@ -63,10 +66,11 @@
             background: #f44336;
             color: white;
             border: none;
-            padding: 8px 15px;
+            padding: 8px 12px;
             border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
+            font-size: 14px;
             transition: all 0.3s;
         }
         
@@ -79,7 +83,7 @@
             max-width: 900px;
             margin: 0 auto;
             background: rgba(228, 228, 228, 0.95);
-            padding: 25px;
+            padding: 20px;
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             backdrop-filter: blur(10px);
@@ -99,8 +103,14 @@
         
         .titulo {
             color: #2E7D32;
-            font-size: 32px;
+            font-size: 28px;
             margin-bottom: 5px;
+        }
+        
+        @media (max-width: 480px) {
+            .titulo {
+                font-size: 22px;
+            }
         }
         
         .alias-section {
@@ -118,7 +128,7 @@
             align-items: center;
         }
         
-        @media (max-width: 768px) {
+        @media (max-width: 600px) {
             .alias-container {
                 flex-direction: column;
             }
@@ -131,6 +141,7 @@
             border-radius: 8px;
             font-size: 16px;
             background: white;
+            width: 100%;
         }
         
         .alias-input:focus {
@@ -147,6 +158,7 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s;
+            white-space: nowrap;
         }
         
         .btn-alias:hover {
@@ -189,6 +201,13 @@
             min-width: 200px;
         }
         
+        @media (max-width: 480px) {
+            .premio-box {
+                min-width: auto;
+                width: 100%;
+            }
+        }
+        
         .premio1 {
             background: #e8f5e9;
             border: 2px solid #4CAF50;
@@ -228,9 +247,15 @@
             backdrop-filter: blur(5px);
         }
         
-        @media (max-width: 768px) {
+        @media (max-width: 600px) {
             .controles {
                 grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 400px) {
+            .controles {
+                grid-template-columns: 1fr;
             }
         }
         
@@ -252,6 +277,7 @@
             border: 1px solid #ccc;
             border-radius: 4px;
             text-align: center;
+            font-size: 14px;
         }
         
         .estadisticas {
@@ -288,7 +314,7 @@
             margin: 15px 0;
         }
         
-        @media (max-width: 768px) {
+        @media (max-width: 480px) {
             .botones {
                 grid-template-columns: 1fr;
             }
@@ -368,6 +394,13 @@
             font-size: 16px;
         }
         
+        @media (max-width: 480px) {
+            .numero {
+                width: 30px;
+                font-size: 14px;
+            }
+        }
+        
         .nombre {
             background: white;
             width: 150px;
@@ -380,6 +413,13 @@
             border-radius: 3px;
             text-align: center;
             font-size: 14px;
+        }
+        
+        @media (max-width: 480px) {
+            .nombre input {
+                font-size: 12px;
+                padding: 6px;
+            }
         }
         
         .nombre input:focus {
@@ -441,6 +481,9 @@
             font-size: 12px;
         }
 
+        /* ============================================
+           MODAL RESPONSIVE - VERSIÓN MEJORADA
+           ============================================ */
         .compra-overlay {
             position: fixed;
             top: 0;
@@ -453,17 +496,21 @@
             display: none;
             justify-content: center;
             align-items: center;
+            padding: 15px;
         }
 
         .compra-modal {
             background: white;
-            padding: 40px;
+            padding: 30px 20px;
             border-radius: 25px;
             max-width: 500px;
-            width: 90%;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
             text-align: center;
             animation: modalEntrada 0.4s ease;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
         }
 
         @keyframes modalEntrada {
@@ -473,27 +520,40 @@
 
         .compra-modal h2 {
             color: #f44336;
-            font-size: 32px;
+            font-size: 28px;
             margin-bottom: 10px;
+        }
+
+        @media (max-width: 480px) {
+            .compra-modal h2 {
+                font-size: 24px;
+            }
         }
 
         .compra-modal p {
             color: #666;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             font-size: 16px;
         }
 
         .compra-packs {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin: 30px 0;
+            gap: 12px;
+            margin: 25px 0;
+        }
+
+        @media (max-width: 400px) {
+            .compra-packs {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
         }
 
         .compra-pack {
             border: 2px solid #e0e0e0;
             border-radius: 15px;
-            padding: 20px;
+            padding: 15px 10px;
             transition: all 0.3s;
             cursor: pointer;
             background: white;
@@ -501,7 +561,7 @@
 
         .compra-pack:hover {
             border-color: #4CAF50;
-            transform: translateY(-5px);
+            transform: translateY(-3px);
             box-shadow: 0 10px 20px rgba(76,175,80,0.2);
         }
 
@@ -518,30 +578,24 @@
         }
 
         .compra-pack-precio {
-            font-size: 24px;
+            font-size: 22px;
             color: #4CAF50;
             font-weight: bold;
-            margin: 10px 0;
-        }
-
-        .compra-pack-ahorro {
-            font-size: 12px;
-            color: #ff9800;
-            font-weight: bold;
+            margin: 8px 0;
         }
 
         .btn-compra-modal {
             background: #4CAF50;
             color: white;
             border: none;
-            padding: 15px 40px;
+            padding: 15px 20px;
             border-radius: 10px;
             font-size: 18px;
             font-weight: bold;
             cursor: pointer;
             width: 100%;
             transition: all 0.3s;
-            margin-top: 20px;
+            margin-top: 15px;
         }
 
         .btn-compra-modal:hover {
@@ -570,6 +624,7 @@
             cursor: pointer;
             font-weight: bold;
             transition: all 0.3s;
+            flex: 1;
         }
         
         .btn-wsp:hover {
@@ -586,6 +641,7 @@
             cursor: pointer;
             font-weight: bold;
             transition: all 0.3s;
+            flex: 1;
         }
         
         .btn-copiar:hover {
@@ -602,6 +658,36 @@
             padding: 10px;
             border-radius: 10px;
             margin: 10px 0;
+            display: inline-block;
+            word-break: break-word;
+        }
+
+        @media (max-width: 480px) {
+            .alias-destacado {
+                font-size: 24px;
+                padding: 8px;
+            }
+        }
+
+        #info-pago {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border: 2px solid #4CAF50;
+        }
+
+        #info-pago h3 {
+            color: #2E7D32;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        #info-pago .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
         }
     </style>
 </head>
@@ -614,54 +700,52 @@
             <p id="modal-mensaje">Elegí un pack para seguir usando el Cartón de la Suerte</p>
             
             <div class="compra-packs">
-                <div class="compra-pack" onclick="seleccionarPack(1, 2500)">
+                <div class="compra-pack" onclick="seleccionarPack(event, 1, 2500)">
                     <div class="compra-pack-nombre">⚡ 1 Hora</div>
                     <div class="compra-pack-precio">₲ 2.500</div>
                 </div>
                 
-                <div class="compra-pack" onclick="seleccionarPack(6, 10000)">
+                <div class="compra-pack" onclick="seleccionarPack(event, 6, 10000)">
                     <div class="compra-pack-nombre">📊 6 Horas</div>
                     <div class="compra-pack-precio">₲ 10.000</div>
                 </div>
                 
-                <div class="compra-pack" onclick="seleccionarPack(12, 15000)">
+                <div class="compra-pack" onclick="seleccionarPack(event, 12, 15000)">
                     <div class="compra-pack-nombre">🚀 12 Horas</div>
                     <div class="compra-pack-precio">₲ 15.000</div>
                 </div>
                 
-                <div class="compra-pack" onclick="seleccionarPack(24, 20000)">
+                <div class="compra-pack" onclick="seleccionarPack(event, 24, 20000)">
                     <div class="compra-pack-nombre">🔥 24 Horas</div>
                     <div class="compra-pack-precio">₲ 20.000</div>
                 </div>
             </div>
 
-            <div id="info-pago" style="display: none; margin-top: 25px; padding: 20px; background: #f8f9fa; border-radius: 15px; border: 2px solid #4CAF50;">
-                <h3 style="color: #2E7D32; margin-bottom: 15px;">💰 Detalles de Transferencia</h3>
+            <div id="info-pago" style="display: none;">
+                <h3>💰 Detalles de Transferencia</h3>
                 
-                <div style="text-align: left; background: white; padding: 20px; border-radius: 10px;">
-                    <p style="margin: 10px 0; font-size: 16px;">
-                        <strong>🏦 Banco:</strong> Ueno Bank
-                    </p>
-                    <p style="margin: 10px 0; font-size: 16px;">
+                <div style="text-align: left; background: white; padding: 15px; border-radius: 10px;">
+                    <p style="margin: 8px 0;"><strong>🏦 Banco:</strong> Ueno Bank</p>
+                    <p style="margin: 8px 0;">
                         <strong>🔹 Alias:</strong> 
                         <span class="alias-destacado">6018795</span>
                     </p>
-                    <p style="margin: 15px 0 5px 0; font-size: 20px; color: #2E7D32;">
+                    <p style="margin: 10px 0 5px; font-size: 20px; color: #2E7D32;">
                         <strong>💰 Monto:</strong> <span id="monto-pago">₲ 0</span>
                     </p>
                 </div>
                 
-                <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
-                    <button onclick="copiarAlias()" class="btn-copiar" style="flex: 1;">
+                <div class="btn-group">
+                    <button onclick="copiarAlias()" class="btn-copiar">
                         📋 Copiar Alias
                     </button>
                     
-                    <button onclick="contactarWhatsApp()" class="btn-wsp" style="flex: 1;">
-                        💬 Avisar por WhatsApp
+                    <button onclick="contactarWhatsApp()" class="btn-wsp">
+                        💬 WhatsApp
                     </button>
                 </div>
                 
-                <button onclick="confirmarPago()" class="btn-compra-modal" style="margin-top: 15px;">
+                <button onclick="confirmarPago()" class="btn-compra-modal">
                     ✅ YA TRANSFERÍ
                 </button>
                 
@@ -671,7 +755,6 @@
                 </p>
             </div>
 
-            <!-- ✅ Botón cerrar agregado (esto faltaba) -->
             <button id="btn-cerrar-modal" onclick="cerrarModalCompra()" class="btn-compra-modal btn-cerrar-modal" style="display: none;">
                 ❌ Cerrar
             </button>
@@ -683,10 +766,10 @@
             <span class="user-name">👤 <span id="user-nombre">Cargando...</span></span>
             <span class="user-time" onclick="abrirModalCompraManual()" id="user-time-btn">⏱️ <span id="user-tiempo">0h 0m</span></span>
         </div>
-        <button class="logout-btn" onclick="cerrarSesion()">🔒 Cerrar Sesión</button>
+        <button class="logout-btn" onclick="cerrarSesion()">🔒 Cerrar</button>
     </div>
     
-    <!-- ✅ App arranca BORROSA (blur) hasta saber el tiempo -->
+    <!-- App arranca BORROSA hasta saber el tiempo -->
     <div class="container blur" id="app-container">
         <div class="header">
             <h1 class="titulo">📋 Carton de la Suerte</h1>
@@ -696,13 +779,13 @@
             <h3 style="color: #0D47A1; margin-bottom: 10px;">💳 ALIAS:</h3>
             
             <div id="alias-edicion" class="alias-container">
-                <input type="text" id="alias-tarjeta" class="alias-input" placeholder="Alias a recibir la transferencia">
-                <button class="btn-alias" onclick="guardarAlias()">GUARDAR ALIAS</button>
+                <input type="text" id="alias-tarjeta" class="alias-input" placeholder="Tu alias para cobrar">
+                <button class="btn-alias" onclick="guardarAlias()">GUARDAR</button>
             </div>
             
             <div id="alias-visualizacion" style="display: none; text-align: center; padding: 10px;">
-                <div style="font-size: 32px; font-weight: bold; color: #2196F3; letter-spacing: 2px; background: white; padding: 15px; border-radius: 10px; border: 2px solid #2196F3;" id="alias-grande"></div>
-                <button class="btn-editar" onclick="editarAlias()" style="margin-top: 15px;">✏️ Cambiar Alias</button>
+                <div style="font-size: 28px; font-weight: bold; color: #2196F3; background: white; padding: 15px; border-radius: 10px; border: 2px solid #2196F3;" id="alias-grande"></div>
+                <button class="btn-editar" onclick="editarAlias()" style="margin-top: 15px;">✏️ Cambiar</button>
             </div>
         </div>
         
@@ -725,7 +808,7 @@
             
             <div class="control-item">
                 <label>Costo (₲):</label>
-                <input type="text" id="costo" value="20.000" min="1000" step="1000">
+                <input type="text" id="costo" value="20.000">
             </div>
             
             <div class="control-item">
@@ -735,8 +818,8 @@
         </div>
         
         <div class="botones">
-            <button class="btn btn-actualizar" onclick="actualizarTodo()">🔄 ACTUALIZAR TABLA</button>
-            <button class="btn btn-sortear" onclick="sortearGanadores()" id="btn-sortear">🎲 SORTEAR GANADOR</button>
+            <button class="btn btn-actualizar" onclick="actualizarTodo()">🔄 ACTUALIZAR</button>
+            <button class="btn btn-sortear" onclick="sortearGanadores()" id="btn-sortear">🎲 SORTEAR</button>
         </div>
         
         <div class="estadisticas">
@@ -752,13 +835,13 @@
             
             <div class="estadistica">
                 <div class="estadistica-valor" id="recaudado">0</div>
-                <div class="estadistica-label">Recaudado (₲)</div>
+                <div class="estadistica-label">Recaudado</div>
             </div>
         </div>
         
         <div class="resultado-sorteo" id="resultado-sorteo"></div>
         
-        <div class="tabla-titulo" id="titulo-tabla">📋 CARTON CON 50 NOMBRES</div>
+        <div class="tabla-titulo" id="titulo-tabla">📋 CARTÓN CON 50 NÚMEROS</div>
         
         <div class="tabla-container">
             <table id="tabla-principal">
@@ -767,12 +850,11 @@
         </div>
         
         <div class="mensaje-final">
-            <p><strong>🎯 ¡Volvimos!</strong> Proba tu suerte y gánate un mini aguinaldo</p>
-            <p style="font-size: 14px; margin-top: 5px;">Al vender todos los numeros hacemos el sorteo</p>
+            <p><strong>🎯 ¡Volvimos!</strong> Probá tu suerte</p>
         </div>
         
         <div class="footer">
-            <p>Sistema Carton de la Suerte - 2026</p>
+            <p>Carton de la Suerte - 2026</p>
         </div>
     </div>
 
@@ -788,6 +870,7 @@
         let tiempoRestanteSegundos = 0;
         let intervaloTiempo = null;
         let packSeleccionado = { horas: null, monto: null };
+        let recargandoHoras = false;
 
         const usuarioGuardado = localStorage.getItem('usuario');
         let usuarioActual = { usuario: 'Usuario' };
@@ -796,7 +879,45 @@
             document.getElementById('user-nombre').textContent = usuarioActual.usuario || 'Usuario';
         }
 
-        function seleccionarPack(horas, monto) {
+        // ============================================
+        // FUNCIÓN PARA RECARGAR HORAS SIN REFRESCAR
+        // ============================================
+        async function recargarHoras() {
+            if (recargandoHoras) return;
+            recargandoHoras = true;
+            
+            try {
+                const res = await fetch(`${API_URL}/tiempo`, {
+                    headers: { 'Authorization': token }
+                });
+                
+                if (!res.ok) throw new Error('Error al recargar');
+                
+                const data = await res.json();
+                const nuevasHoras = Math.round(data.horas_restantes * 3600);
+                
+                if (nuevasHoras > tiempoRestanteSegundos) {
+                    tiempoRestanteSegundos = nuevasHoras;
+                    actualizarDisplayTiempo();
+                    
+                    if (tiempoRestanteSegundos > 0) {
+                        document.getElementById('app-container').classList.remove('blur');
+                        cerrarModalCompra();
+                    }
+                    
+                    console.log('✅ Horas recargadas:', nuevasHoras);
+                }
+            } catch (error) {
+                console.error('Error recargando horas:', error);
+            } finally {
+                recargandoHoras = false;
+            }
+        }
+
+        // ============================================
+        // FUNCIONES DE PAGO
+        // ============================================
+        function seleccionarPack(event, horas, monto) {
             document.querySelectorAll('.compra-pack').forEach(p => p.classList.remove('selected'));
             event.currentTarget.classList.add('selected');
             packSeleccionado = { horas, monto };
@@ -847,6 +968,11 @@
                 if (data.success) {
                     alert(`✅ Solicitud enviada. Te acreditaremos las ${horas} horas en minutos.`);
                     cerrarModalCompra();
+                    
+                    // Empezar a esperar la recarga de horas
+                    setTimeout(recargarHoras, 5000);
+                    setTimeout(recargarHoras, 10000);
+                    setTimeout(recargarHoras, 20000);
                 } else {
                     alert('Error al enviar solicitud: ' + (data.error || 'desconocido'));
                 }
@@ -855,6 +981,9 @@
             }
         }
 
+        // ============================================
+        // FUNCIONES DEL MODAL
+        // ============================================
         function abrirModalCompraManual() {
             if (tiempoRestanteSegundos > 0) {
                 document.getElementById('modal-titulo').textContent = "⏰ Comprar Horas";
@@ -880,12 +1009,20 @@
 
         function cerrarModalCompra() {
             document.getElementById('compra-overlay').style.display = 'none';
-            document.getElementById('app-container').classList.remove('blur');
+            
+            // Solo quitar blur si hay tiempo
+            if (tiempoRestanteSegundos > 0) {
+                document.getElementById('app-container').classList.remove('blur');
+            }
+            
             document.getElementById('info-pago').style.display = 'none';
             document.querySelectorAll('.compra-pack').forEach(p => p.classList.remove('selected'));
             packSeleccionado = { horas: null, monto: null };
         }
 
+        // ============================================
+        // FUNCIONES DE TIEMPO
+        // ============================================
         async function cargarTiempo() {
             try {
                 const res = await fetch(`${API_URL}/tiempo`, {
@@ -902,10 +1039,10 @@
                 if (tiempoRestanteSegundos <= 0) {
                     abrirModalCompraAuto();
                     document.getElementById('user-tiempo').textContent = '0h 0m';
-                    return; // ✅ Sale, la tabla queda borrosa
+                    return;
                 }
 
-                // ✅ Solo si tiene tiempo, QUITAR el blur y mostrar todo
+                // Quitar blur y mostrar todo
                 document.getElementById('app-container').classList.remove('blur');
                 actualizarDisplayTiempo();
 
@@ -935,17 +1072,79 @@
             document.getElementById('user-tiempo').textContent = `${horas}h ${minutos}m`;
         }
 
-        function cerrarSesion() {
-            if (confirm('¿Estás seguro de cerrar sesión?')) {
-                if (intervaloTiempo) clearInterval(intervaloTiempo);
-                localStorage.removeItem('token');
-                localStorage.removeItem('usuario');
-                localStorage.removeItem('carton_alias');
-                localStorage.removeItem('carton_tabla');
-                window.location.href = 'login.html';
+        // ============================================
+        // FUNCIONES DE ALIAS
+        // ============================================
+        function mostrarAliasGuardado(alias) {
+            document.getElementById('alias-edicion').style.display = 'none';
+            document.getElementById('alias-visualizacion').style.display = 'block';
+            document.getElementById('alias-grande').textContent = alias;
+        }
+
+        function editarAlias() {
+            document.getElementById('alias-edicion').style.display = 'flex';
+            document.getElementById('alias-visualizacion').style.display = 'none';
+            document.getElementById('alias-tarjeta').value = sistema.miAlias;
+        }
+
+        async function guardarAlias() {
+            const aliasInput = document.getElementById('alias-tarjeta');
+            const alias = aliasInput.value.trim();
+
+            if (!alias) {
+                alert("Por favor, ingresa tu alias");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/guardar-alias`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token
+                    },
+                    body: JSON.stringify({ alias })
+                });
+
+                const data = await res.json();
+
+                if (data.success) {
+                    sistema.miAlias = alias;
+                    localStorage.setItem('carton_alias', alias);
+                    mostrarAliasGuardado(alias);
+                    alert("✅ Alias guardado");
+                } else {
+                    alert('Error al guardar alias');
+                }
+            } catch (error) {
+                alert('Error de conexión');
             }
         }
 
+        async function cargarAliasGuardado() {
+            const aliasGuardado = localStorage.getItem('carton_alias');
+            if (aliasGuardado) {
+                sistema.miAlias = aliasGuardado;
+                mostrarAliasGuardado(aliasGuardado);
+            }
+            try {
+                const res = await fetch(`${API_URL}/obtener-alias`, {
+                    headers: { 'Authorization': token }
+                });
+                const data = await res.json();
+                if (data.alias) {
+                    sistema.miAlias = data.alias;
+                    mostrarAliasGuardado(data.alias);
+                    localStorage.setItem('carton_alias', data.alias);
+                }
+            } catch (error) {
+                console.error('Error cargando alias:', error);
+            }
+        }
+
+        // ============================================
+        // FUNCIONES DE LA TABLA
+        // ============================================
         let sistema = {
             lugares: 20,
             costo: 20000,
@@ -982,73 +1181,6 @@
             cargarAliasGuardado();
         }
 
-        function mostrarAliasGuardado(alias) {
-            document.getElementById('alias-edicion').style.display = 'none';
-            document.getElementById('alias-visualizacion').style.display = 'block';
-            document.getElementById('alias-grande').textContent = alias;
-        }
-
-        function editarAlias() {
-            document.getElementById('alias-edicion').style.display = 'flex';
-            document.getElementById('alias-visualizacion').style.display = 'none';
-            document.getElementById('alias-tarjeta').value = sistema.miAlias;
-        }
-
-        async function guardarAlias() {
-            const aliasInput = document.getElementById('alias-tarjeta');
-            const alias = aliasInput.value.trim();
-
-            if (!alias) {
-                alert("Por favor, ingresa tu alias de tarjeta");
-                return;
-            }
-
-            try {
-                const res = await fetch(`${API_URL}/guardar-alias`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': token
-                    },
-                    body: JSON.stringify({ alias })
-                });
-
-                const data = await res.json();
-
-                if (data.success) {
-                    sistema.miAlias = alias;
-                    localStorage.setItem('carton_alias', alias);
-                    mostrarAliasGuardado(alias);
-                    alert("✅ Alias guardado correctamente");
-                } else {
-                    alert('Error al guardar alias');
-                }
-            } catch (error) {
-                alert('Error de conexión');
-            }
-        }
-
-        async function cargarAliasGuardado() {
-            const aliasGuardado = localStorage.getItem('carton_alias');
-            if (aliasGuardado) {
-                sistema.miAlias = aliasGuardado;
-                mostrarAliasGuardado(aliasGuardado);
-            }
-            try {
-                const res = await fetch(`${API_URL}/obtener-alias`, {
-                    headers: { 'Authorization': token }
-                });
-                const data = await res.json();
-                if (data.alias) {
-                    sistema.miAlias = data.alias;
-                    mostrarAliasGuardado(data.alias);
-                    localStorage.setItem('carton_alias', data.alias);
-                }
-            } catch (error) {
-                console.error('Error cargando alias:', error);
-            }
-        }
-
         function crearTablaFormatoCorrecto() {
             const cuerpo = document.getElementById('cuerpo-tabla');
             cuerpo.innerHTML = '';
@@ -1076,7 +1208,7 @@
                         const input = document.createElement('input');
                         input.type = 'text';
                         input.value = sistema.nombres[indice] || "";
-                        input.placeholder = 'Escribe nombre';
+                        input.placeholder = 'Nombre';
                         input.dataset.indice = indice;
 
                         input.addEventListener('input', function() {
@@ -1170,7 +1302,7 @@
             const ocupados = sistema.nombres.filter(n => n && n.trim() !== "").length;
 
             if (ocupados < 1) {
-                alert("Necesitas al menos 1 participante para sortear");
+                alert("Necesitas al menos 1 participante");
                 return;
             }
 
@@ -1249,15 +1381,11 @@
         function mostrarResultado(numero, nombre, premio) {
             document.getElementById('resultado-sorteo').innerHTML = `
                 <h2 style="color: #2E7D32;">🎉 ¡TENEMOS UN GANADOR! 🎉</h2>
-                <div class="ganador-box" style="border: 2px solid #4CAF50; padding: 20px; border-radius: 10px; margin: 20px 0;">
-                    <div style="font-size: 18px; color: #666;">🏆 GANADOR</div>
+                <div style="border: 2px solid #4CAF50; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                    <div style="font-size: 18px;">🏆 GANADOR</div>
                     <div style="font-size: 48px; font-weight: bold; color: #2E7D32;">#${numero}</div>
                     <div style="font-size: 24px; margin: 10px 0;">${nombre}</div>
                     <div style="font-size: 28px; color: #4CAF50; font-weight: bold;">${formatoNumero(premio)} ₲</div>
-                </div>
-                <div style="background: #f5f5f5; padding: 15px; border-radius: 8px; margin-top: 20px;">
-                    <p style="color: #666; margin-bottom: 10px;"><strong>📋 Información para depósitos:</strong></p>
-                    <p style="color: #333;"><strong>Tu alias:</strong> <span style="color: #2196F3;">${sistema.miAlias || 'No configurado'}</span></p>
                 </div>
                 <button onclick="cerrarResultado()" style="padding: 10px 20px; background: #4CAF50; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 20px;">Cerrar</button>
             `;
@@ -1266,27 +1394,6 @@
 
         function cerrarResultado() {
             document.getElementById('resultado-sorteo').style.display = 'none';
-        }
-
-        function limpiarTodo() {
-            if (confirm("⚠️ ¿Estás seguro de que quieres limpiar todo para un nuevo sorteo?\n\nEsto borrará todos los nombres de la tabla y los resultados del sorteo anterior.")) {
-                sistema.nombres = Array(sistema.lugares).fill("");
-                sistema.ganadores = [];
-
-                cerrarResultado();
-
-                const celdasResaltadas = document.querySelectorAll('.celda-ganadora, .celda-seleccionada');
-                celdasResaltadas.forEach(celda => {
-                    celda.classList.remove('celda-ganadora');
-                    celda.classList.remove('celda-seleccionada');
-                });
-
-                crearTablaFormatoCorrecto();
-                actualizarCalculos();
-                guardarDatos();
-
-                alert("Todo ha sido limpiado correctamente. Puedes comenzar un nuevo sorteo.");
-            }
         }
 
         function guardarDatos() {
@@ -1314,9 +1421,23 @@
             return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
         }
 
+        function cerrarSesion() {
+            if (confirm('¿Cerrar sesión?')) {
+                if (intervaloTiempo) clearInterval(intervaloTiempo);
+                localStorage.removeItem('token');
+                localStorage.removeItem('usuario');
+                localStorage.removeItem('carton_alias');
+                localStorage.removeItem('carton_tabla');
+                window.location.href = 'login.html';
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             init();
             cargarTiempo();
+            
+            // Verificar recarga cada 30 segundos
+            setInterval(recargarHoras, 30000);
         });
     </script>
 </body>
