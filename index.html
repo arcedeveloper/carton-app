@@ -482,7 +482,7 @@
         }
 
         /* ============================================
-           MODAL RESPONSIVE - VERSIÓN MEJORADA
+           MODAL RESPONSIVE
            ============================================ */
         .compra-overlay {
             position: fixed;
@@ -510,7 +510,7 @@
             text-align: center;
             animation: modalEntrada 0.4s ease;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+            -webkit-overflow-scrolling: touch;
         }
 
         @keyframes modalEntrada {
@@ -689,6 +689,20 @@
             margin-top: 20px;
             flex-wrap: wrap;
         }
+
+        /* ============================================
+           ANIMACIÓN PARA RELOJ EN ALERTA
+           ============================================ */
+        @keyframes relojAlerta {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .reloj-peligro {
+            animation: relojAlerta 1s infinite;
+            background: rgba(244, 67, 54, 0.8) !important;
+        }
     </style>
 </head>
 <body>
@@ -736,16 +750,16 @@
                 </div>
                 
                 <div class="btn-group">
-                    <button onclick="copiarAlias()" class="btn-copiar">
+                    <button onclick="copiarAlias()" class="btn-copiar" id="btn-copiar">
                         📋 Copiar Alias
                     </button>
                     
-                    <button onclick="contactarWhatsApp()" class="btn-wsp">
+                    <button onclick="contactarWhatsApp()" class="btn-wsp" id="btn-wsp">
                         💬 WhatsApp
                     </button>
                 </div>
                 
-                <button onclick="confirmarPago()" class="btn-compra-modal">
+                <button onclick="confirmarPago()" class="btn-compra-modal" id="btn-confirmar-pago">
                     ✅ YA TRANSFERÍ
                 </button>
                 
@@ -859,7 +873,8 @@
     </div>
 
     <script>
-        const API_URL = window.API_URL;
+        // ✅ Fallback por si config.js falla
+        const API_URL = window.API_URL || "https://carton-backend.onrender.com/api";
         const token = localStorage.getItem('token');
         const WHATSAPP_NUMBER = '595983775018';
 
@@ -880,6 +895,15 @@
         }
 
         // ============================================
+        // FUNCIÓN SEGURA PARA SORTEO (crypto.getRandomValues)
+        // ============================================
+        function randomSeguro(max) {
+            const array = new Uint32Array(1);
+            crypto.getRandomValues(array);
+            return array[0] % max;
+        }
+
+        // ============================================
         // FUNCIÓN PARA RECARGAR HORAS SIN REFRESCAR
         // ============================================
         async function recargarHoras() {
@@ -896,7 +920,7 @@
                 const data = await res.json();
                 const nuevasHoras = Math.round(data.horas_restantes * 3600);
                 
-                if (nuevasHoras > tiempoRestanteSegundos) {
+                if (nuevasHoras !== tiempoRestanteSegundos) {
                     tiempoRestanteSegundos = nuevasHoras;
                     actualizarDisplayTiempo();
                     
@@ -905,7 +929,7 @@
                         cerrarModalCompra();
                     }
                     
-                    console.log('✅ Horas recargadas:', nuevasHoras);
+                    console.log('✅ Horas actualizadas:', nuevasHoras);
                 }
             } catch (error) {
                 console.error('Error recargando horas:', error);
@@ -927,8 +951,27 @@
         }
 
         function copiarAlias() {
-            navigator.clipboard.writeText('6018795');
-            alert('✅ Alias copiado: 6018795');
+            const alias = "6018795";
+            const btn = document.getElementById('btn-copiar');
+            const textoOriginal = btn.textContent;
+
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(alias).then(() => {
+                    btn.textContent = "✅ Copiado!";
+                    setTimeout(() => { btn.textContent = textoOriginal; }, 2000);
+                });
+            } else {
+                // Fallback para navegadores antiguos
+                const input = document.createElement("input");
+                input.value = alias;
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand("copy");
+                document.body.removeChild(input);
+                
+                btn.textContent = "✅ Copiado!";
+                setTimeout(() => { btn.textContent = textoOriginal; }, 2000);
+            }
         }
 
         function contactarWhatsApp() {
@@ -951,6 +994,13 @@
                 return;
             }
 
+            const btn = document.getElementById('btn-confirmar-pago');
+            const textoOriginal = btn.textContent;
+            
+            // Bloquear botón para evitar spam
+            btn.disabled = true;
+            btn.textContent = "⏳ Enviando...";
+
             const { horas, monto } = packSeleccionado;
 
             try {
@@ -969,7 +1019,7 @@
                     alert(`✅ Solicitud enviada. Te acreditaremos las ${horas} horas en minutos.`);
                     cerrarModalCompra();
                     
-                    // Empezar a esperar la recarga de horas
+                    // Intentar recargar varias veces
                     setTimeout(recargarHoras, 5000);
                     setTimeout(recargarHoras, 10000);
                     setTimeout(recargarHoras, 20000);
@@ -978,25 +1028,37 @@
                 }
             } catch (error) {
                 alert('Error de conexión');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = textoOriginal;
             }
         }
+
+        // ============================================
+        // FUNCIONES DEL MODAL
+        // ============================================
         function abrirModalCompraManual() {
-    if (tiempoRestanteSegundos > 0) {
-        document.getElementById('modal-titulo').textContent = "⏰ Comprar Horas";
-        document.getElementById('modal-mensaje').textContent = "Elegí un pack para agregar más horas";
-        document.getElementById('btn-cerrar-modal').style.display = "block";
-    } else {
-        document.getElementById('modal-titulo').textContent = "⏰ ¡Se te acabaron las horas!";
-        document.getElementById('modal-mensaje').textContent = "Elegí un pack para seguir usando el Cartón de la Suerte";
-        document.getElementById('btn-cerrar-modal').style.display = "none";
-    }
-    
-    document.getElementById('compra-overlay').style.display = 'flex';
-    document.getElementById('info-pago').style.display = 'none';
-    document.querySelectorAll('.compra-pack').forEach(p => p.classList.remove('selected'));
-}
+            // Resetear pack seleccionado
+            packSeleccionado = { horas: null, monto: null };
+            
+            if (tiempoRestanteSegundos > 0) {
+                document.getElementById('modal-titulo').textContent = "⏰ Comprar Horas";
+                document.getElementById('modal-mensaje').textContent = "Elegí un pack para agregar más horas";
+                document.getElementById('btn-cerrar-modal').style.display = "block";
+            } else {
+                document.getElementById('modal-titulo').textContent = "⏰ ¡Se te acabaron las horas!";
+                document.getElementById('modal-mensaje').textContent = "Elegí un pack para seguir usando el Cartón de la Suerte";
+                document.getElementById('btn-cerrar-modal').style.display = "none";
+            }
+            
+            document.getElementById('compra-overlay').style.display = 'flex';
+            document.getElementById('info-pago').style.display = 'none';
+            document.querySelectorAll('.compra-pack').forEach(p => p.classList.remove('selected'));
+        }
 
         function abrirModalCompraAuto() {
+            packSeleccionado = { horas: null, monto: null };
+            
             document.getElementById('modal-titulo').textContent = "⏰ ¡Se te acabaron las horas!";
             document.getElementById('modal-mensaje').textContent = "Elegí un pack para seguir usando el Cartón de la Suerte";
             document.getElementById('btn-cerrar-modal').style.display = "none";
@@ -1010,7 +1072,6 @@
         function cerrarModalCompra() {
             document.getElementById('compra-overlay').style.display = 'none';
             
-            // Solo quitar blur si hay tiempo
             if (tiempoRestanteSegundos > 0) {
                 document.getElementById('app-container').classList.remove('blur');
             }
@@ -1042,7 +1103,6 @@
                     return;
                 }
 
-                // Quitar blur y mostrar todo
                 document.getElementById('app-container').classList.remove('blur');
                 actualizarDisplayTiempo();
 
@@ -1067,9 +1127,18 @@
                 document.getElementById('user-tiempo').textContent = '0h 0m';
                 return;
             }
+            
             const horas = Math.floor(tiempoRestanteSegundos / 3600);
             const minutos = Math.floor((tiempoRestanteSegundos % 3600) / 60);
             document.getElementById('user-tiempo').textContent = `${horas}h ${minutos}m`;
+            
+            // ✅ Mejora visual: animación cuando quedan menos de 5 minutos
+            const reloj = document.getElementById('user-time-btn');
+            if (tiempoRestanteSegundos < 300) {
+                reloj.classList.add('reloj-peligro');
+            } else {
+                reloj.classList.remove('reloj-peligro');
+            }
         }
 
         // ============================================
@@ -1084,7 +1153,8 @@
         function editarAlias() {
             document.getElementById('alias-edicion').style.display = 'flex';
             document.getElementById('alias-visualizacion').style.display = 'none';
-            document.getElementById('alias-tarjeta').value = sistema.miAlias;
+            // ✅ Corregido: evitar undefined
+            document.getElementById('alias-tarjeta').value = sistema.miAlias || "";
         }
 
         async function guardarAlias() {
@@ -1331,7 +1401,8 @@
                     celda.classList.remove('celda-seleccionada');
                 });
 
-                const indiceAleatorio = Math.floor(Math.random() * numerosOcupados.length);
+                // ✅ Usar random seguro
+                const indiceAleatorio = randomSeguro(numerosOcupados.length);
                 const numeroSeleccionado = numerosOcupados[indiceAleatorio];
 
                 const celdaNumero = document.getElementById(`celda-numero-${numeroSeleccionado + 1}`);
@@ -1344,9 +1415,9 @@
                 if (contadorAnimacion > 20) {
                     clearInterval(intervaloSeleccion);
 
-                    const indiceGanador = numerosOcupados[Math.floor(Math.random() * numerosOcupados.length)];
-                    const numeroGanador = indiceGanador + 1;
-                    const nombreGanador = sistema.nombres[indiceGanador];
+                    const indiceGanador = randomSeguro(numerosOcupados.length);
+                    const numeroGanador = numerosOcupados[indiceGanador] + 1;
+                    const nombreGanador = sistema.nombres[numerosOcupados[indiceGanador]];
 
                     document.querySelectorAll('.celda-seleccionada').forEach(celda => {
                         celda.classList.remove('celda-seleccionada');
@@ -1370,7 +1441,7 @@
                     mostrarResultado(numeroGanador, nombreGanador, premioTotal);
 
                     btnSortear.disabled = false;
-                    btnSortear.textContent = "🎲 SORTEAR GANADOR";
+                    btnSortear.textContent = "🎲 SORTEAR";
                     sorteoEnProgreso = false;
 
                     guardarDatos();
