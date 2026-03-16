@@ -635,7 +635,6 @@
                 </div>
             </div>
 
-            <!-- Información de pago (aparece después de seleccionar pack) -->
             <div id="info-pago" style="display: none; margin-top: 25px; padding: 20px; background: #f8f9fa; border-radius: 15px; border: 2px solid #4CAF50;">
                 <h3 style="color: #2E7D32; margin-bottom: 15px;">💰 Detalles de Transferencias</h3>
                 
@@ -671,8 +670,9 @@
                     Te acreditamos las horas en minutos.
                 </p>
             </div>
-            </div>
-            </div>
+        </div>
+    </div>
+
     <div class="user-bar">
         <div class="user-info">
             <span class="user-name">👤 <span id="user-nombre">Cargando...</span></span>
@@ -791,21 +791,13 @@
         }
 
         function seleccionarPack(horas, monto) {
-    document.querySelectorAll('.compra-pack').forEach(p => p.classList.remove('selected'));
-    event.currentTarget.classList.add('selected');
-    packSeleccionado = { horas, monto };
-    
-    // ✅ Mostrar info de pago INMEDIATAMENTE
-    document.getElementById('info-pago').style.display = 'block';
-    document.getElementById('monto-pago').textContent = `₲ ${formatoNumero(monto)}`;
-    
-    // ✅ Ocultar el botón viejo
-    document.getElementById('btn-confirmar-compra').style.display = 'none';
-    
-    // ✅ Habilitar el botón de confirmar (aunque ahora usamos el nuevo flujo)
-    const btnConfirmar = document.getElementById('btn-confirmar-compra');
-    btnConfirmar.disabled = false;
-}
+            document.querySelectorAll('.compra-pack').forEach(p => p.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            packSeleccionado = { horas, monto };
+            
+            document.getElementById('info-pago').style.display = 'block';
+            document.getElementById('monto-pago').textContent = `₲ ${formatoNumero(monto)}`;
+        }
 
         function copiarAlias() {
             navigator.clipboard.writeText('6018795');
@@ -864,9 +856,7 @@
                 document.getElementById('btn-cerrar-modal').style.display = "block";
                 document.getElementById('compra-overlay').style.display = 'flex';
                 
-                // Resetear vista
                 document.getElementById('info-pago').style.display = 'none';
-                document.getElementById('btn-confirmar-compra').style.display = 'block';
                 document.querySelectorAll('.compra-pack').forEach(p => p.classList.remove('selected'));
             }
         }
@@ -878,9 +868,7 @@
             document.getElementById('compra-overlay').style.display = 'flex';
             document.getElementById('app-container').classList.add('blur');
             
-            // Resetear vista
             document.getElementById('info-pago').style.display = 'none';
-            document.getElementById('btn-confirmar-compra').style.display = 'block';
             document.querySelectorAll('.compra-pack').forEach(p => p.classList.remove('selected'));
         }
 
@@ -888,18 +876,8 @@
             document.getElementById('compra-overlay').style.display = 'none';
             document.getElementById('app-container').classList.remove('blur');
             document.getElementById('info-pago').style.display = 'none';
-            document.getElementById('btn-confirmar-compra').style.display = 'block';
             document.querySelectorAll('.compra-pack').forEach(p => p.classList.remove('selected'));
             packSeleccionado = { horas: null, monto: null };
-            const btnConfirmar = document.getElementById('btn-confirmar-compra');
-            btnConfirmar.disabled = true;
-            btnConfirmar.textContent = 'Seleccioná un pack';
-            
-            if (tiempoRestanteSegundos <= 0) {
-                document.getElementById('app-container').classList.add('blur');
-            } else {
-                document.getElementById('app-container').classList.remove('blur');
-            }
         }
 
         async function cargarTiempo() {
