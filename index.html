@@ -980,21 +980,21 @@
                 alert('Error de conexión');
             }
         }
-
-        // ============================================
-        // FUNCIONES DEL MODAL
-        // ============================================
         function abrirModalCompraManual() {
-            if (tiempoRestanteSegundos > 0) {
-                document.getElementById('modal-titulo').textContent = "⏰ Comprar Horas";
-                document.getElementById('modal-mensaje').textContent = "Elegí un pack para agregar más horas";
-                document.getElementById('btn-cerrar-modal').style.display = "block";
-                document.getElementById('compra-overlay').style.display = 'flex';
-                
-                document.getElementById('info-pago').style.display = 'none';
-                document.querySelectorAll('.compra-pack').forEach(p => p.classList.remove('selected'));
-            }
-        }
+    if (tiempoRestanteSegundos > 0) {
+        document.getElementById('modal-titulo').textContent = "⏰ Comprar Horas";
+        document.getElementById('modal-mensaje').textContent = "Elegí un pack para agregar más horas";
+        document.getElementById('btn-cerrar-modal').style.display = "block";
+    } else {
+        document.getElementById('modal-titulo').textContent = "⏰ ¡Se te acabaron las horas!";
+        document.getElementById('modal-mensaje').textContent = "Elegí un pack para seguir usando el Cartón de la Suerte";
+        document.getElementById('btn-cerrar-modal').style.display = "none";
+    }
+    
+    document.getElementById('compra-overlay').style.display = 'flex';
+    document.getElementById('info-pago').style.display = 'none';
+    document.querySelectorAll('.compra-pack').forEach(p => p.classList.remove('selected'));
+}
 
         function abrirModalCompraAuto() {
             document.getElementById('modal-titulo').textContent = "⏰ ¡Se te acabaron las horas!";
