@@ -560,6 +560,49 @@
             background: #666;
             margin-top: 10px;
         }
+        
+        .btn-wsp {
+            background: #25D366;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .btn-wsp:hover {
+            background: #128C7E;
+            transform: translateY(-2px);
+        }
+        
+        .btn-copiar {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .btn-copiar:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+        }
+        
+        .alias-destacado {
+            font-size: 32px;
+            font-weight: bold;
+            color: #4CAF50;
+            letter-spacing: 2px;
+            background: #e8f5e9;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -567,36 +610,69 @@
 
     <div id="compra-overlay" class="compra-overlay">
         <div class="compra-modal">
-            <h2 id="modal-titulo">⏰ ¡Necesitás horas!</h2>
+            <h2 id="modal-titulo">⏰ Comprar Horas</h2>
             <p id="modal-mensaje">Elegí un pack para seguir usando el Cartón de la Suerte</p>
             
             <div class="compra-packs">
                 <div class="compra-pack" onclick="seleccionarPack(1, 2500)">
                     <div class="compra-pack-nombre">⚡ 1 Hora</div>
                     <div class="compra-pack-precio">₲ 2.500</div>
-                    <div class="compra-pack-ahorro">Mas Popular</div>
                 </div>
                 
                 <div class="compra-pack" onclick="seleccionarPack(6, 10000)">
                     <div class="compra-pack-nombre">📊 6 Horas</div>
                     <div class="compra-pack-precio">₲ 10.000</div>
-                    <div class="compra-pack-ahorro">Ahorrás 33%</div>
                 </div>
                 
                 <div class="compra-pack" onclick="seleccionarPack(12, 15000)">
                     <div class="compra-pack-nombre">🚀 12 Horas</div>
                     <div class="compra-pack-precio">₲ 15.000</div>
-                    <div class="compra-pack-ahorro">Ahorrás 50%</div>
                 </div>
                 
                 <div class="compra-pack" onclick="seleccionarPack(24, 20000)">
                     <div class="compra-pack-nombre">🔥 24 Horas</div>
                     <div class="compra-pack-precio">₲ 20.000</div>
-                    <div class="compra-pack-ahorro">Ahorrás 65%</div>
                 </div>
             </div>
+
+            <!-- Información de pago (aparece después de seleccionar pack) -->
+            <div id="info-pago" style="display: none; margin-top: 25px; padding: 20px; background: #f8f9fa; border-radius: 15px; border: 2px solid #4CAF50;">
+                <h3 style="color: #2E7D32; margin-bottom: 15px;">💰 Transferí a Ueno Bank</h3>
+                
+                <div style="text-align: left; background: white; padding: 20px; border-radius: 10px;">
+                    <p style="margin: 10px 0; font-size: 16px;">
+                        <strong>🏦 Banco:</strong> Ueno Bank
+                    </p>
+                    <p style="margin: 10px 0; font-size: 16px;">
+                        <strong>🔹 Alias:</strong> 
+                        <span class="alias-destacado">6018795</span>
+                    </p>
+                    <p style="margin: 15px 0 5px 0; font-size: 20px; color: #2E7D32;">
+                        <strong>💰 Monto:</strong> <span id="monto-pago">₲ 0</span>
+                    </p>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+                    <button onclick="copiarAlias()" class="btn-copiar" style="flex: 1;">
+                        📋 Copiar Alias
+                    </button>
+                    
+                    <button onclick="contactarWhatsApp()" class="btn-wsp" style="flex: 1;">
+                        💬 Avisar por WhatsApp
+                    </button>
+                </div>
+                
+                <button onclick="confirmarPago()" class="btn-compra-modal" style="margin-top: 15px;">
+                    ✅ YA TRANSFERÍ
+                </button>
+                
+                <p style="font-size: 12px; color: #666; margin-top: 15px;">
+                    📱 Copiá el alias, transferí desde cualquier banco y luego avisanos por WhatsApp.<br>
+                    Te acreditamos las horas en minutos.
+                </p>
+            </div>
             
-            <button class="btn-compra-modal" id="btn-confirmar-compra" onclick="confirmarCompra()" disabled>Seleccioná un pack</button>
+            <button class="btn-compra-modal" id="btn-confirmar-compra" onclick="confirmarCompraOriginal()" disabled style="display: block;">Seleccioná un pack</button>
             <button class="btn-compra-modal btn-cerrar-modal" id="btn-cerrar-modal" onclick="cerrarModalCompra()" style="display: none;">Cerrar</button>
         </div>
     </div>
@@ -701,6 +777,7 @@
     <script>
         const API_URL = window.API_URL;
         const token = localStorage.getItem('token');
+        const WHATSAPP_NUMBER = '595983775018';
 
         if (!token) {
             window.location.href = 'login.html';
@@ -721,21 +798,42 @@
             document.querySelectorAll('.compra-pack').forEach(p => p.classList.remove('selected'));
             event.currentTarget.classList.add('selected');
             packSeleccionado = { horas, monto };
-            const btnConfirmar = document.getElementById('btn-confirmar-compra');
-            btnConfirmar.disabled = false;
-            const horaTexto = horas === 1 ? 'hora' : 'horas';
-            btnConfirmar.textContent = `Comprar ${horas} ${horaTexto} por ₲ ${formatoNumero(monto)}`;
+            
+            // Mostrar info de pago
+            document.getElementById('info-pago').style.display = 'block';
+            document.getElementById('monto-pago').textContent = `₲ ${formatoNumero(monto)}`;
+            
+            // Ocultar botón original
+            document.getElementById('btn-confirmar-compra').style.display = 'none';
         }
 
-        async function confirmarCompra() {
+        function copiarAlias() {
+            navigator.clipboard.writeText('6018795');
+            alert('✅ Alias copiado: 6018795');
+        }
+
+        function contactarWhatsApp() {
             if (!packSeleccionado.horas) {
-                alert('Seleccioná un pack');
+                alert('Seleccioná un pack primero');
+                return;
+            }
+            
+            const mensaje = encodeURIComponent(
+                `¡Hola! Quiero informar que transferí ₲ ${formatoNumero(packSeleccionado.monto)} para comprar ${packSeleccionado.horas} horas.\n\n` +
+                `Mi alias es: ${sistema.miAlias || 'No especificado'}\n` +
+                `Usuario: ${usuarioActual.usuario}`
+            );
+            
+            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${mensaje}`, '_blank');
+        }
+
+        async function confirmarPago() {
+            if (!packSeleccionado.horas) {
+                alert('Seleccioná un pack primero');
                 return;
             }
 
-            const confirmar = confirm(`Vas a solicitar la compra de ${packSeleccionado.horas} horas por ₲ ${formatoNumero(packSeleccionado.monto)}. Luego de transferir al Alias 6018795, el administrador aprobará tus horas.`);
-
-            if (!confirmar) return;
+            const { horas, monto } = packSeleccionado;
 
             try {
                 const res = await fetch(`${API_URL}/solicitar-compra`, {
@@ -744,16 +842,13 @@
                         'Content-Type': 'application/json',
                         'Authorization': token
                     },
-                    body: JSON.stringify({
-                        horas: packSeleccionado.horas,
-                        monto: packSeleccionado.monto
-                    })
+                    body: JSON.stringify({ horas, monto })
                 });
 
                 const data = await res.json();
 
                 if (data.success) {
-                    alert(`✅ Solicitud enviada. Esperá a que el administrador apruebe tus horas.`);
+                    alert(`✅ Solicitud enviada. Te acreditaremos las ${horas} horas en minutos.`);
                     cerrarModalCompra();
                 } else {
                     alert('Error al enviar solicitud: ' + (data.error || 'desconocido'));
@@ -763,12 +858,27 @@
             }
         }
 
+        function confirmarCompraOriginal() {
+            if (!packSeleccionado.horas) {
+                alert('Seleccioná un pack');
+                return;
+            }
+            
+            document.getElementById('info-pago').style.display = 'block';
+            document.getElementById('btn-confirmar-compra').style.display = 'none';
+        }
+
         function abrirModalCompraManual() {
             if (tiempoRestanteSegundos > 0) {
                 document.getElementById('modal-titulo').textContent = "⏰ Comprar Horas";
                 document.getElementById('modal-mensaje').textContent = "Elegí un pack para agregar más horas";
                 document.getElementById('btn-cerrar-modal').style.display = "block";
                 document.getElementById('compra-overlay').style.display = 'flex';
+                
+                // Resetear vista
+                document.getElementById('info-pago').style.display = 'none';
+                document.getElementById('btn-confirmar-compra').style.display = 'block';
+                document.querySelectorAll('.compra-pack').forEach(p => p.classList.remove('selected'));
             }
         }
 
@@ -778,10 +888,18 @@
             document.getElementById('btn-cerrar-modal').style.display = "none";
             document.getElementById('compra-overlay').style.display = 'flex';
             document.getElementById('app-container').classList.add('blur');
+            
+            // Resetear vista
+            document.getElementById('info-pago').style.display = 'none';
+            document.getElementById('btn-confirmar-compra').style.display = 'block';
+            document.querySelectorAll('.compra-pack').forEach(p => p.classList.remove('selected'));
         }
 
         function cerrarModalCompra() {
             document.getElementById('compra-overlay').style.display = 'none';
+            document.getElementById('app-container').classList.remove('blur');
+            document.getElementById('info-pago').style.display = 'none';
+            document.getElementById('btn-confirmar-compra').style.display = 'block';
             document.querySelectorAll('.compra-pack').forEach(p => p.classList.remove('selected'));
             packSeleccionado = { horas: null, monto: null };
             const btnConfirmar = document.getElementById('btn-confirmar-compra');
@@ -866,28 +984,29 @@
         let intervaloSeleccion = null;
 
         function init() {
-    const datosGuardados = localStorage.getItem('carton_tabla');
-    if (datosGuardados) {
-        try {
-            const datos = JSON.parse(datosGuardados);
-            sistema = { ...sistema, ...datos };
-        } catch (e) {
-            console.error('Error cargando datos:', e);
-            sistema.nombres = Array(sistema.lugares).fill("");
+            const datosGuardados = localStorage.getItem('carton_tabla');
+            if (datosGuardados) {
+                try {
+                    const datos = JSON.parse(datosGuardados);
+                    sistema = { ...sistema, ...datos };
+                } catch (e) {
+                    console.error('Error cargando datos:', e);
+                    sistema.nombres = Array(sistema.lugares).fill("");
+                }
+            } else {
+                sistema.nombres = Array(sistema.lugares).fill("");
+            }
+
+            document.getElementById('lugares').value = sistema.lugares;
+            document.getElementById('costo').value = formatoNumero(sistema.costo);
+            document.getElementById('pct-premio1').value = sistema.pctPremio1;
+            document.getElementById('costo').addEventListener('input', formatearInputCosto);
+
+            crearTablaFormatoCorrecto();
+            actualizarCalculos();
+            cargarAliasGuardado();
         }
-    } else {
-        sistema.nombres = Array(sistema.lugares).fill("");
-    }
 
-    document.getElementById('lugares').value = sistema.lugares;
-    document.getElementById('costo').value = formatoNumero(sistema.costo);
-    document.getElementById('pct-premio1').value = sistema.pctPremio1;
-    document.getElementById('costo').addEventListener('input', formatearInputCosto);
-
-    crearTablaFormatoCorrecto();
-    actualizarCalculos();
-    cargarAliasGuardado();
-}
         function mostrarAliasGuardado(alias) {
             document.getElementById('alias-edicion').style.display = 'none';
             document.getElementById('alias-visualizacion').style.display = 'block';
