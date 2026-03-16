@@ -750,18 +750,14 @@
                 </div>
                 
                 <div class="btn-group">
-                    <button onclick="copiarAlias()" class="btn-copiar" id="btn-copiar">
-                        📋 Copiar Alias
-                    </button>
-                    
-                    <button onclick="contactarWhatsApp()" class="btn-wsp" id="btn-wsp">
-                        💬 WhatsApp
-                    </button>
-                </div>
-                
-                <button onclick="confirmarPago()" class="btn-compra-modal" id="btn-confirmar-pago">
-                    ✅ YA TRANSFERÍ
-                </button>
+    <button onclick="copiarAlias()" class="btn-copiar" id="btn-copiar">
+        📋 Copiar Alias
+    </button>
+</div>
+
+<button onclick="confirmarPago()" class="btn-compra-modal" id="btn-confirmar-pago">
+    ✅ YA TRANSFERÍ
+</button>
                 
                 <p style="font-size: 12px; color: #666; margin-top: 15px;">
                     📱 Copiá el alias, transferí desde cualquier banco y luego avisanos por WhatsApp.<br>
@@ -974,65 +970,67 @@
             }
         }
 
-        function contactarWhatsApp() {
-            if (!packSeleccionado.horas) {
-                alert('Seleccioná un pack primero');
-                return;
-            }
-            
+       async function confirmarPago() {
+    if (!packSeleccionado.horas) {
+        alert('Seleccioná un pack primero');
+        return;
+    }
+
+    const btn = document.getElementById('btn-confirmar-pago');
+    const textoOriginal = btn.textContent;
+    
+    // Bloquear botón para evitar spam
+    btn.disabled = true;
+    btn.textContent = "⏳ Procesando...";
+
+    const { horas, monto } = packSeleccionado;
+
+    try {
+        // 1️⃣ Enviar solicitud al admin
+        const res = await fetch(`${API_URL}/solicitar-compra`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': token
+            },
+            body: JSON.stringify({ horas, monto })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+            // 2️⃣ Abrir WhatsApp automáticamente
             const mensaje = encodeURIComponent(
-                `¡Hola! Quiero informar que transferí ₲ ${formatoNumero(packSeleccionado.monto)} para comprar ${packSeleccionado.horas} horas.\n\n` +
-                `Usuario: ${usuarioActual.usuario}`
+                `✅ Hola! Transferí ₲ ${formatoNumero(monto)} para ${horas} horas.\n\n` +
+                `• Usuario: ${usuarioActual.usuario}\n` +
+                `• Alias: 6018795\n` +
+                `• Monto: ₲ ${formatoNumero(monto)}\n` +
+                `• Horas: ${horas}\n\n` +
+                `🙏 Por favor, acreditame las horas. Gracias!`
             );
             
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${mensaje}`, '_blank');
-        }
-
-        async function confirmarPago() {
-            if (!packSeleccionado.horas) {
-                alert('Seleccioná un pack primero');
-                return;
-            }
-
-            const btn = document.getElementById('btn-confirmar-pago');
-            const textoOriginal = btn.textContent;
             
-            // Bloquear botón para evitar spam
-            btn.disabled = true;
-            btn.textContent = "⏳ Enviando...";
-
-            const { horas, monto } = packSeleccionado;
-
-            try {
-                const res = await fetch(`${API_URL}/solicitar-compra`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': token
-                    },
-                    body: JSON.stringify({ horas, monto })
-                });
-
-                const data = await res.json();
-
-                if (data.success) {
-                    alert(`✅ Solicitud enviada. Te acreditaremos las ${horas} horas en minutos.`);
-                    cerrarModalCompra();
-                    
-                    // Intentar recargar varias veces
-                    setTimeout(recargarHoras, 5000);
-                    setTimeout(recargarHoras, 10000);
-                    setTimeout(recargarHoras, 20000);
-                } else {
-                    alert('Error al enviar solicitud: ' + (data.error || 'desconocido'));
-                }
-            } catch (error) {
-                alert('Error de conexión');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = textoOriginal;
-            }
+            // 3️⃣ Cerrar modal
+            cerrarModalCompra();
+            
+            // 4️⃣ Intentar recargar horas
+            setTimeout(recargarHoras, 5000);
+            setTimeout(recargarHoras, 10000);
+            setTimeout(recargarHoras, 20000);
+            
+            alert(`✅ Solicitud enviada. Te acreditaremos las ${horas} horas en minutos.`);
+            
+        } else {
+            alert('Error al enviar solicitud: ' + (data.error || 'desconocido'));
         }
+    } catch (error) {
+        alert('Error de conexión');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = textoOriginal;
+    }
+}
 
         // ============================================
         // FUNCIONES DEL MODAL
