@@ -999,22 +999,16 @@
         const data = await res.json();
 
         if (data.success) {
-            // 2️⃣ Abrir WhatsApp automáticamente
             const mensaje = encodeURIComponent(
                 `✅ Hola! Transferí ₲ ${formatoNumero(monto)} para ${horas} horas.\n\n` +
                 `• Usuario: ${usuarioActual.usuario}\n` +
-                `• Alias: 6018795\n` +
-                `• Monto: ₲ ${formatoNumero(monto)}\n` +
-                `• Horas: ${horas}\n\n` +
-                `🙏 Por favor, acreditame las horas. Gracias!`
+                `Favor de acreditarme las horas. Gracias!`
             );
             
             window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${mensaje}`, '_blank');
             
-            // 3️⃣ Cerrar modal
             cerrarModalCompra();
             
-            // 4️⃣ Intentar recargar horas
             setTimeout(recargarHoras, 5000);
             setTimeout(recargarHoras, 10000);
             setTimeout(recargarHoras, 20000);
