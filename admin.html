@@ -682,12 +682,13 @@
         const API_URL = window.API_URL;
         let usuarioSeleccionado = null;
         
+        // ÚNICO objeto para manejar los intervalos
         const intervalosUsuarios = {};
-        
+
         if (token) {
             verificarToken();
         }
-        
+
         function togglePassword(inputId, button) {
             const input = document.getElementById(inputId);
             const svg = button.querySelector('svg');
@@ -706,7 +707,7 @@
                 `;
             }
         }
-        
+
         async function verificarToken() {
             try {
                 const res = await fetch(`${API_URL}/admin/stats`, {
@@ -724,7 +725,7 @@
                 token = null;
             }
         }
-        
+
         async function iniciarSesion() {
             const usuario = document.getElementById('login-usuario').value;
             const password = document.getElementById('login-password').value;
@@ -764,20 +765,24 @@
                 errorDiv.style.display = 'block';
             }
         }
-        
+
         function cargarPanelAdmin() {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('admin-panel').style.display = 'block';
+            
+            // Carga inicial
             cargarEstadisticas();
             cargarSolicitudes();
             cargarUsuarios();
             cargarEstadisticasVentas();
             
-            setInterval(sincronizarTodosLosTiempos, 30000);
-            setInterval(cargarSolicitudes, 10000); 
+            // SOLO 2 INTERVALOS (como en el index, pero con tiempos más razonables)
+            setInterval(cargarSolicitudes, 15000); // Solicitudes cada 15 seg
+            setInterval(sincronizarTiemposConBackend, 60000); // ⭐ Sincronización CADA 1 MINUTO (no cada 15 seg)
         }
-        
+
         function cerrarSesion() {
+            // Limpiar TODOS los intervalos al salir
             Object.values(intervalosUsuarios).forEach(intervalo => clearInterval(intervalo));
             
             localStorage.removeItem('admin_token');
@@ -785,7 +790,8 @@
             document.getElementById('login-screen').style.display = 'block';
             document.getElementById('admin-panel').style.display = 'none';
         }
-        
+
+        // --- FUNCIONES DE SOLICITUDES ---
         async function cargarSolicitudes() {
             try {
                 const res = await fetch(`${API_URL}/admin/solicitudes`, {
@@ -819,7 +825,7 @@
                 console.error('Error cargando solicitudes:', error);
             }
         }
-        
+
         async function aprobarSolicitud(solicitudId) {
             if (confirm('¿Aprobar esta solicitud? Se agregarán las horas al usuario.')) {
                 try {
@@ -837,7 +843,7 @@
                     if (data.success) {
                         alert('✅ Solicitud aprobada');
                         cargarSolicitudes();
-                        cargarUsuarios();
+                        cargarUsuarios(); // Recargar usuarios para actualizar el tiempo
                         cargarEstadisticas();
                         cargarEstadisticasVentas();
                     } else {
@@ -848,7 +854,7 @@
                 }
             }
         }
-        
+
         async function rechazarSolicitud(solicitudId) {
             if (confirm('¿Rechazar esta solicitud?')) {
                 try {
@@ -874,7 +880,8 @@
                 }
             }
         }
-        
+
+        // --- FUNCIONES DE ESTADÍSTICAS ---
         async function cargarEstadisticas() {
             try {
                 const res = await fetch(`${API_URL}/admin/stats`, {
@@ -928,11 +935,6 @@
                 return;
             }
 
-            const traduccionDias = {
-                'Monday': 'Lunes', 'Tuesday': 'Martes', 'Wednesday': 'Miércoles',
-                'Thursday': 'Jueves', 'Friday': 'Viernes', 'Saturday': 'Sábado', 'Sunday': 'Domingo'
-            };
-
             const maxComprasDia = Math.max(...data.por_dia.map(d => d.total_compras));
             const maxComprasHora = Math.max(...data.por_hora.map(h => h.total_compras));
 
@@ -948,6 +950,8 @@
             }
 
             html += '<div class="estadisticas-grid">';
+            
+            // Tabla por día
             html += `
                 <div class="estadisticas-card">
                     <h3>📅 Ventas por día</h3>
@@ -988,6 +992,8 @@
                     </table>
                 </div>
             `;
+            
+            // Tabla por hora
             html += `
                 <div class="estadisticas-card">
                     <h3>⏰ Ventas por hora</h3>
@@ -1033,6 +1039,11 @@
 
             container.innerHTML = html;
         }
+
+        // ============================================
+        // FUNCIONES DE TIEMPO - VERSIÓN SIMPLIFICADA (COMO EL INDEX)
+        // ============================================
+        
         function formatearTiempoDesdeSegundos(segundos) {
             if (segundos <= 0) return "0h 0m";
             
@@ -1048,49 +1059,53 @@
             }
         }
         
+        // ⭐ VERSIÓN SIMPLIFICADA - IGUAL QUE EL INDEX
         function iniciarContadorUsuario(usuarioId, segundosIniciales) {
+            // Limpiar intervalo existente si lo hay
             if (intervalosUsuarios[usuarioId]) {
                 clearInterval(intervalosUsuarios[usuarioId]);
             }
             
             let segundosRestantes = segundosIniciales;
             
-            actualizarTiempoUsuario(usuarioId, segundosRestantes);
-            
-            intervalosUsuarios[usuarioId] = setInterval(() => {
-                if (segundosRestantes > 0) {
-                    segundosRestantes--;
-                    actualizarTiempoUsuario(usuarioId, segundosRestantes);
+            // Función para actualizar la celda
+            const actualizarCelda = () => {
+                const tiempoCell = document.getElementById(`tiempo-${usuarioId}`);
+                if (tiempoCell) {
+                    const tiempoFormateado = formatearTiempoDesdeSegundos(segundosRestantes);
+                    tiempoCell.innerHTML = `<strong>${tiempoFormateado}</strong>`;
                     
-                    if (segundosRestantes <= 0) {
-                        clearInterval(intervalosUsuarios[usuarioId]);
-                        delete intervalosUsuarios[usuarioId];
-                        
-                        const tiempoCell = document.getElementById(`tiempo-${usuarioId}`);
-                        if (tiempoCell) {
-                            tiempoCell.classList.add('tiempo-cero');
-                        }
-                    }
-                    
-                    if (segundosRestantes < 300) {
-                        const tiempoCell = document.getElementById(`tiempo-${usuarioId}`);
-                        if (tiempoCell) {
-                            tiempoCell.classList.add('tiempo-bajo');
-                        }
+                    // Aplicar clases de estilo
+                    tiempoCell.classList.remove('tiempo-bajo', 'tiempo-cero');
+                    if (segundosRestantes < 300 && segundosRestantes > 0) {
+                        tiempoCell.classList.add('tiempo-bajo');
+                    } else if (segundosRestantes <= 0) {
+                        tiempoCell.classList.add('tiempo-cero');
                     }
                 }
-            }, 1000);
-        }
-        
-        function actualizarTiempoUsuario(usuarioId, segundos) {
-            const tiempoCell = document.getElementById(`tiempo-${usuarioId}`);
-            if (tiempoCell) {
-                const tiempoFormateado = formatearTiempoDesdeSegundos(segundos);
-                tiempoCell.innerHTML = `<strong>${tiempoFormateado}</strong>`;
+            };
+            
+            // Actualizar inmediatamente
+            actualizarCelda();
+            
+            // Solo iniciar intervalo si hay tiempo
+            if (segundosRestantes > 0) {
+                intervalosUsuarios[usuarioId] = setInterval(() => {
+                    if (segundosRestantes > 0) {
+                        segundosRestantes--;
+                        actualizarCelda();
+                    } else {
+                        // Si llega a cero, limpiamos el intervalo
+                        clearInterval(intervalosUsuarios[usuarioId]);
+                        delete intervalosUsuarios[usuarioId];
+                    }
+                }, 1000);
             }
         }
         
-        async function sincronizarTodosLosTiempos() {
+        // ⭐ SINCRONIZACIÓN SIMPLE - UNA VEZ POR MINUTO
+        async function sincronizarTiemposConBackend() {
+            console.log('🔄 Sincronizando tiempos (cada 1 minuto)');
             try {
                 const res = await fetch(`${API_URL}/admin/usuarios`, {
                     headers: { 'Authorization': token }
@@ -1098,17 +1113,41 @@
                 const usuarios = await res.json();
                 
                 usuarios.forEach(u => {
-                    const segundosActuales = Math.max(0, Math.round((u.horas_restantes || 0) * 3600));
+                    const usuarioId = u.id;
+                    const tiempoCell = document.getElementById(`tiempo-${usuarioId}`);
                     
-                    if (intervalosUsuarios[u.id]) {
-                        clearInterval(intervalosUsuarios[u.id]);
-                        delete intervalosUsuarios[u.id];
-                    }
-                    
-                    if (u.activo && !u.en_pausa && segundosActuales > 0) {
-                        iniciarContadorUsuario(u.id, segundosActuales);
-                    } else {
-                        actualizarTiempoUsuario(u.id, segundosActuales);
+                    if (tiempoCell) {
+                        // Obtener el tiempo actual del backend en segundos
+                        const segundosBackend = Math.max(0, Math.round((u.horas_restantes || 0) * 3600));
+                        
+                        // Obtener el tiempo actual mostrado en la celda (para comparar)
+                        const tiempoActualTexto = tiempoCell.textContent;
+                        
+                        // Función auxiliar para convertir texto a segundos
+                        const convertirTextoASegundos = (texto) => {
+                            if (!texto) return 0;
+                            let total = 0;
+                            const horasMatch = texto.match(/(\d+)h/);
+                            if (horasMatch) total += parseInt(horasMatch[1]) * 3600;
+                            const minutosMatch = texto.match(/(\d+)m/);
+                            if (minutosMatch) total += parseInt(minutosMatch[1]) * 60;
+                            return total;
+                        };
+                        
+                        const segundosActuales = convertirTextoASegundos(tiempoActualTexto);
+                        
+                        // SOLO sincronizamos si hay una diferencia grande (más de 5 segundos)
+                        if (Math.abs(segundosActuales - segundosBackend) > 5) {
+                            console.log(`📊 Usuario ${usuarioId}: sincronizado (${segundosActuales}s → ${segundosBackend}s)`);
+                            
+                            // Limpiar intervalo existente y empezar de nuevo con el tiempo correcto
+                            if (intervalosUsuarios[usuarioId]) {
+                                clearInterval(intervalosUsuarios[usuarioId]);
+                                delete intervalosUsuarios[usuarioId];
+                            }
+                            
+                            iniciarContadorUsuario(usuarioId, segundosBackend);
+                        }
                     }
                 });
             } catch (error) {
@@ -1123,7 +1162,9 @@
                 });
                 const usuarios = await res.json();
                 
+                // Limpiar todos los intervalos existentes
                 Object.values(intervalosUsuarios).forEach(intervalo => clearInterval(intervalo));
+                Object.keys(intervalosUsuarios).forEach(key => delete intervalosUsuarios[key]);
                 
                 const tbody = document.getElementById('cuerpo-tabla');
                 tbody.innerHTML = '';
@@ -1160,6 +1201,7 @@
                     
                     tbody.appendChild(tr);
                     
+                    // Iniciar contador si el usuario está activo, no en pausa y tiene tiempo
                     if (u.activo && !u.en_pausa && segundosIniciales > 0) {
                         iniciarContadorUsuario(u.id, segundosIniciales);
                     }
@@ -1168,18 +1210,18 @@
                 console.error('Error cargando usuarios:', error);
             }
         }
-        
+
         function abrirModalHoras(userId) {
             usuarioSeleccionado = userId;
             document.getElementById('modal-user-id').textContent = userId;
             document.getElementById('modal-horas').style.display = 'block';
         }
-        
+
         function cerrarModal() {
             document.getElementById('modal-horas').style.display = 'none';
             usuarioSeleccionado = null;
         }
-        
+
         async function confirmarAgregarHoras() {
             const horas = document.getElementById('horas-agregar').value;
             
@@ -1201,12 +1243,7 @@
                 if (data.success) {
                     alert('✅ Horas agregadas correctamente');
                     cerrarModal();
-                    
-                    if (intervalosUsuarios[usuarioSeleccionado]) {
-                        clearInterval(intervalosUsuarios[usuarioSeleccionado]);
-                    }
-                    
-                    cargarUsuarios();
+                    cargarUsuarios(); // Recargar para actualizar el contador
                     cargarEstadisticas();
                 } else {
                     alert('Error al agregar horas: ' + (data.error || 'desconocido'));
@@ -1215,7 +1252,7 @@
                 alert('Error de conexión al agregar horas');
             }
         }
-        
+
         async function resetearHoras(userId) {
             if (confirm('¿Estás seguro de resetear las horas de este usuario a 0?')) {
                 try {
@@ -1233,17 +1270,13 @@
                     if (data.success) {
                         alert('✅ Horas reseteadas');
                         
+                        // Limpiar intervalo
                         if (intervalosUsuarios[userId]) {
                             clearInterval(intervalosUsuarios[userId]);
                             delete intervalosUsuarios[userId];
                         }
                         
-                        const tiempoCell = document.getElementById(`tiempo-${userId}`);
-                        if (tiempoCell) {
-                            tiempoCell.innerHTML = `<strong>0h 0m</strong>`;
-                            tiempoCell.classList.add('tiempo-cero');
-                        }
-                        
+                        cargarUsuarios(); // Recargar la tabla
                         cargarEstadisticas();
                     } else {
                         alert('Error al resetear horas: ' + (data.error || 'desconocido'));
@@ -1253,7 +1286,7 @@
                 }
             }
         }
-        
+
         async function toggleUsuario(userId, activo) {
             try {
                 const res = await fetch(`${API_URL}/admin/toggle-usuario`, {
@@ -1269,12 +1302,13 @@
                 
                 if (data.success) {
                     if (!activo) {
+                        // Si bloqueamos, paramos el contador
                         if (intervalosUsuarios[userId]) {
                             clearInterval(intervalosUsuarios[userId]);
                             delete intervalosUsuarios[userId];
                         }
                     }
-                    cargarUsuarios();
+                    cargarUsuarios(); // Recargar para actualizar estado
                     cargarEstadisticas();
                 } else {
                     alert('Error al cambiar estado: ' + (data.error || 'desconocido'));
