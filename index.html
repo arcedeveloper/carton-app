@@ -703,6 +703,19 @@
             animation: relojAlerta 1s infinite;
             background: rgba(244, 67, 54, 0.8) !important;
         }
+
+        /* ============================================
+           ANIMACIÓN DE DESTELLO PARA EL MODAL
+           ============================================ */
+        @keyframes destelloPago {
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(76, 175, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+        }
+
+        .destello-pago {
+            animation: destelloPago 1s ease;
+        }
     </style>
 </head>
 <body>
@@ -750,14 +763,14 @@
                 </div>
                 
                 <div class="btn-group">
-    <button onclick="copiarAlias()" class="btn-copiar" id="btn-copiar">
-        📋 Copiar Alias
-    </button>
-</div>
+                    <button onclick="copiarAlias()" class="btn-copiar" id="btn-copiar">
+                        📋 Copiar Alias
+                    </button>
+                </div>
 
-<button onclick="confirmarPago()" class="btn-compra-modal" id="btn-confirmar-pago">
-    ✅ YA TRANSFERÍ
-</button>
+                <button onclick="confirmarPago()" class="btn-compra-modal" id="btn-confirmar-pago">
+                    ✅ YA TRANSFERÍ
+                </button>
                 
                 <p style="font-size: 12px; color: #666; margin-top: 15px;">
                     📱 Copiá el alias, transferí desde cualquier banco y luego avisanos por WhatsApp.<br>
@@ -935,7 +948,7 @@
         }
 
         // ============================================
-        // FUNCIONES DE PAGO
+        // FUNCIONES DE PAGO - MODIFICADAS CON SCROLL AUTOMÁTICO
         // ============================================
         function seleccionarPack(event, horas, monto) {
             document.querySelectorAll('.compra-pack').forEach(p => p.classList.remove('selected'));
@@ -944,6 +957,22 @@
             
             document.getElementById('info-pago').style.display = 'block';
             document.getElementById('monto-pago').textContent = `₲ ${formatoNumero(monto)}`;
+            
+            // ⭐ NUEVO: Hacer scroll automático hacia los detalles de pago
+            setTimeout(() => {
+                const infoPago = document.getElementById('info-pago');
+                infoPago.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'center',
+                    inline: 'nearest'
+                });
+                
+                // Agregar un destello visual para llamar la atención
+                infoPago.classList.add('destello-pago');
+                setTimeout(() => {
+                    infoPago.classList.remove('destello-pago');
+                }, 1000);
+            }, 100); // Pequeño delay para que termine la animación del click
         }
 
         function copiarAlias() {
@@ -970,61 +999,61 @@
             }
         }
 
-       async function confirmarPago() {
-    if (!packSeleccionado.horas) {
-        alert('Seleccioná un pack primero');
-        return;
-    }
+        async function confirmarPago() {
+            if (!packSeleccionado.horas) {
+                alert('Seleccioná un pack primero');
+                return;
+            }
 
-    const btn = document.getElementById('btn-confirmar-pago');
-    const textoOriginal = btn.textContent;
-    
-    // Bloquear botón para evitar spam
-    btn.disabled = true;
-    btn.textContent = "⏳ Procesando...";
+            const btn = document.getElementById('btn-confirmar-pago');
+            const textoOriginal = btn.textContent;
+            
+            // Bloquear botón para evitar spam
+            btn.disabled = true;
+            btn.textContent = "⏳ Procesando...";
 
-    const { horas, monto } = packSeleccionado;
+            const { horas, monto } = packSeleccionado;
 
-    try {
-        // 1️⃣ Enviar solicitud al admin
-        const res = await fetch(`${API_URL}/solicitar-compra`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': token
-            },
-            body: JSON.stringify({ horas, monto })
-        });
+            try {
+                // 1️⃣ Enviar solicitud al admin
+                const res = await fetch(`${API_URL}/solicitar-compra`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token
+                    },
+                    body: JSON.stringify({ horas, monto })
+                });
 
-        const data = await res.json();
+                const data = await res.json();
 
-        if (data.success) {
-            const mensaje = encodeURIComponent(
-                `✅ Hola! Transferí ₲ ${formatoNumero(monto)} para ${horas} horas.\n\n` +
-                `• Usuario: ${usuarioActual.usuario}\n` +
-                `Favor de acreditarme las horas. Gracias!`
-            );
-            
-            window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${mensaje}`, '_blank');
-            
-            cerrarModalCompra();
-            
-            setTimeout(recargarHoras, 5000);
-            setTimeout(recargarHoras, 10000);
-            setTimeout(recargarHoras, 20000);
-            
-            alert(`✅ Solicitud enviada. Te acreditaremos las ${horas} horas en minutos.`);
-            
-        } else {
-            alert('Error al enviar solicitud: ' + (data.error || 'desconocido'));
+                if (data.success) {
+                    const mensaje = encodeURIComponent(
+                        `✅ Hola! Transferí ₲ ${formatoNumero(monto)} para ${horas} horas.\n\n` +
+                        `• Usuario: ${usuarioActual.usuario}\n` +
+                        `Favor de acreditarme las horas. Gracias!`
+                    );
+                    
+                    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${mensaje}`, '_blank');
+                    
+                    cerrarModalCompra();
+                    
+                    setTimeout(recargarHoras, 5000);
+                    setTimeout(recargarHoras, 10000);
+                    setTimeout(recargarHoras, 20000);
+                    
+                    alert(`✅ Solicitud enviada. Te acreditaremos las ${horas} horas en minutos.`);
+                    
+                } else {
+                    alert('Error al enviar solicitud: ' + (data.error || 'desconocido'));
+                }
+            } catch (error) {
+                alert('Error de conexión');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = textoOriginal;
+            }
         }
-    } catch (error) {
-        alert('Error de conexión');
-    } finally {
-        btn.disabled = false;
-        btn.textContent = textoOriginal;
-    }
-}
 
         // ============================================
         // FUNCIONES DEL MODAL
